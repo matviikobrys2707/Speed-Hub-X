@@ -1,11 +1,11 @@
--- BlazixHub - Lucky Blocks WORKING SCRIPT
+-- BlazixHub - Lucky Blocks UNIVERSAL (PC + Mobile)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- WORKING CONFIGURATION
+-- UNIVERSAL CONFIGURATION
 local BlazixHub = {
     Config = {
         ["Fly"] = false,
@@ -19,10 +19,62 @@ local BlazixHub = {
     Connections = {},
     Active = true,
     Flying = false,
-    FlySpeed = 50
+    FlySpeed = 50,
+    IsMobile = false
 }
 
--- REAL FLY FUNCTION
+-- DETECT PLATFORM
+BlazixHub.IsMobile = (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
+
+-- IMPROVED INFINITE JUMP (поднимает вверх при удержании)
+local function EnableInfiniteJump()
+    if BlazixHub.Connections["InfiniteJump"] then
+        BlazixHub.Connections["InfiniteJump"]:Disconnect()
+    end
+    
+    local isJumping = false
+    local liftVelocity
+    
+    -- Jump request
+    BlazixHub.Connections["InfiniteJump"] = UserInputService.JumpRequest:Connect(function()
+        if BlazixHub.Config["Infinite Jump"] and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                isJumping = true
+                
+                -- Create lift velocity for continuous upward movement
+                if not liftVelocity then
+                    liftVelocity = Instance.new("BodyVelocity")
+                    liftVelocity.MaxForce = Vector3.new(0, 40000, 0)
+                    liftVelocity.Parent = LocalPlayer.Character.HumanoidRootPart
+                end
+            end
+        end
+    end)
+    
+    -- Continuous lift while jumping
+    BlazixHub.Connections["JumpLift"] = RunService.Heartbeat:Connect(function()
+        if BlazixHub.Config["Infinite Jump"] and LocalPlayer.Character and isJumping then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Jumping then
+                if liftVelocity then
+                    liftVelocity.Velocity = Vector3.new(0, 50, 0) -- Поднимает вверх
+                end
+            else
+                isJumping = false
+                if liftVelocity then
+                    liftVelocity.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+        elseif liftVelocity then
+            liftVelocity.Velocity = Vector3.new(0, 0, 0)
+            isJumping = false
+        end
+    end)
+end
+
+-- UNIVERSAL FLY FUNCTION (работает на PC и телефоне)
 local function EnableFly()
     if BlazixHub.Connections["Fly"] then
         BlazixHub.Connections["Fly"]:Disconnect()
@@ -48,6 +100,7 @@ local function EnableFly()
                 local camera = workspace.CurrentCamera
                 local direction = Vector3.new()
                 
+                -- PC Controls
                 if UserInputService:IsKeyDown(Enum.KeyCode.W) then
                     direction = direction + camera.CFrame.LookVector
                 end
@@ -64,6 +117,14 @@ local function EnableFly()
                     direction = direction + Vector3.new(0, 1, 0)
                 end
                 if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    direction = direction - Vector3.new(0, 1, 0)
+                end
+                
+                -- Mobile fly controls (virtual buttons)
+                if BlazixHub.MobileFlyUp then
+                    direction = direction + Vector3.new(0, 1, 0)
+                end
+                if BlazixHub.MobileFlyDown then
                     direction = direction - Vector3.new(0, 1, 0)
                 end
                 
@@ -90,7 +151,7 @@ local function EnableFly()
     end)
 end
 
--- REAL GOD MODE
+-- GOD MODE
 local function EnableGodMode()
     if BlazixHub.Connections["GodMode"] then
         BlazixHub.Connections["GodMode"]:Disconnect()
@@ -107,7 +168,7 @@ local function EnableGodMode()
     end)
 end
 
--- REAL SPEED BOOST
+-- SPEED BOOST
 local function EnableSpeedBoost()
     if BlazixHub.Connections["SpeedBoost"] then
         BlazixHub.Connections["SpeedBoost"]:Disconnect()
@@ -128,23 +189,7 @@ local function EnableSpeedBoost()
     end)
 end
 
--- REAL INFINITE JUMP
-local function EnableInfiniteJump()
-    if BlazixHub.Connections["InfiniteJump"] then
-        BlazixHub.Connections["InfiniteJump"]:Disconnect()
-    end
-    
-    BlazixHub.Connections["InfiniteJump"] = UserInputService.JumpRequest:Connect(function()
-        if BlazixHub.Config["Infinite Jump"] and LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-        end
-    end)
-end
-
--- REAL NOCLIP
+-- NOCLIP
 local function EnableNoclip()
     if BlazixHub.Connections["Noclip"] then
         BlazixHub.Connections["Noclip"]:Disconnect()
@@ -171,17 +216,13 @@ end
 local function AutoFarmLuckyBlocks()
     while BlazixHub.Active and BlazixHub.Config["Auto Farm"] do
         pcall(function()
-            -- Find lucky blocks in workspace
             for _, obj in pairs(workspace:GetDescendants()) do
-                if obj.Name:lower():find("lucky") or obj.Name:lower():find("block") then
+                if (obj.Name:lower():find("lucky") or obj.Name:lower():find("block")) and not obj.Name:lower():find("base") then
                     if obj:IsA("Part") or obj:IsA("MeshPart") then
                         local distance = (LocalPlayer.Character.HumanoidRootPart.Position - obj.Position).Magnitude
                         if distance < 20 then
-                            -- Teleport to block
                             LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
                             task.wait(0.2)
-                            
-                            -- Click on block (simulate touch)
                             firetouchinterest(LocalPlayer.Character.HumanoidRootPart, obj, 0)
                             firetouchinterest(LocalPlayer.Character.HumanoidRootPart, obj, 1)
                         end
@@ -193,12 +234,84 @@ local function AutoFarmLuckyBlocks()
     end
 end
 
+-- CREATE MOBILE FLY CONTROLS
+local function CreateMobileFlyControls(screenGui)
+    if not BlazixHub.IsMobile then return end
+    
+    -- Fly Up Button
+    local FlyUpBtn = Instance.new("TextButton")
+    FlyUpBtn.Name = "FlyUpBtn"
+    FlyUpBtn.Size = UDim2.new(0, 80, 0, 80)
+    FlyUpBtn.Position = UDim2.new(1, -100, 0.7, 0)
+    FlyUpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    FlyUpBtn.BackgroundTransparency = 0.3
+    FlyUpBtn.Text = "🔼\nFLY UP"
+    FlyUpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    FlyUpBtn.Font = Enum.Font.GothamBold
+    FlyUpBtn.TextSize = 12
+    FlyUpBtn.TextWrapped = true
+    FlyUpBtn.Visible = false
+    FlyUpBtn.Parent = screenGui
+    
+    -- Fly Down Button
+    local FlyDownBtn = Instance.new("TextButton")
+    FlyDownBtn.Name = "FlyDownBtn"
+    FlyDownBtn.Size = UDim2.new(0, 80, 0, 80)
+    FlyDownBtn.Position = UDim2.new(1, -100, 0.85, 0)
+    FlyDownBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
+    FlyDownBtn.BackgroundTransparency = 0.3
+    FlyDownBtn.Text = "🔽\nFLY DOWN"
+    FlyDownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    FlyDownBtn.Font = Enum.Font.GothamBold
+    FlyDownBtn.TextSize = 12
+    FlyDownBtn.TextWrapped = true
+    FlyDownBtn.Visible = false
+    FlyDownBtn.Parent = screenGui
+    
+    -- Button events
+    FlyUpBtn.MouseButton1Down:Connect(function()
+        BlazixHub.MobileFlyUp = true
+    end)
+    
+    FlyUpBtn.MouseButton1Up:Connect(function()
+        BlazixHub.MobileFlyUp = false
+    end)
+    
+    FlyUpBtn.TouchLongPress:Connect(function()
+        BlazixHub.MobileFlyUp = true
+    end)
+    
+    FlyDownBtn.MouseButton1Down:Connect(function()
+        BlazixHub.MobileFlyDown = true
+    end)
+    
+    FlyDownBtn.MouseButton1Up:Connect(function()
+        BlazixHub.MobileFlyDown = false
+    end)
+    
+    FlyDownBtn.TouchLongPress:Connect(function()
+        BlazixHub.MobileFlyDown = true
+    end)
+    
+    -- Show/hide fly buttons when fly is toggled
+    BlazixHub.MobileFlyButtons = {FlyUpBtn, FlyDownBtn}
+end
+
+-- SHOW/HIDE MOBILE FLY BUTTONS
+local function ToggleMobileFlyButtons(visible)
+    if BlazixHub.MobileFlyButtons then
+        for _, button in pairs(BlazixHub.MobileFlyButtons) do
+            button.Visible = visible
+        end
+    end
+end
+
 -- START ALL FUNCTIONS
 local function StartFunctions()
+    EnableInfiniteJump()
     EnableFly()
     EnableGodMode()
     EnableSpeedBoost()
-    EnableInfiniteJump()
     EnableNoclip()
     
     if BlazixHub.Config["Auto Farm"] then
@@ -219,13 +332,16 @@ local function CreateUI()
     OpenMenuBtn.Size = UDim2.new(0, 80, 0, 80)
     OpenMenuBtn.Position = UDim2.new(0, 10, 0, 10)
     OpenMenuBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
-    OpenMenuBtn.Text = "🎮\nBLAZIX"
+    OpenMenuBtn.Text = BlazixHub.IsMobile and "📱\nBLAZIX" or "🎮\nBLAZIX"
     OpenMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     OpenMenuBtn.Font = Enum.Font.GothamBold
     OpenMenuBtn.TextSize = 14
     OpenMenuBtn.TextWrapped = true
     OpenMenuBtn.Visible = true
     OpenMenuBtn.Parent = ScreenGui
+
+    -- Create mobile fly controls
+    CreateMobileFlyControls(ScreenGui)
 
     -- Main Window
     local MainFrame = Instance.new("Frame")
@@ -261,7 +377,7 @@ local function CreateUI()
     TitleLabel.Size = UDim2.new(1, -80, 1, 0)
     TitleLabel.Position = UDim2.new(0, 10, 0, 0)
     TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = "BLAZIX HUB - LUCKY BLOCKS"
+    TitleLabel.Text = BlazixHub.IsMobile and "BLAZIX HUB - MOBILE" or "BLAZIX HUB - PC"
     TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Font = Enum.Font.GothamBold
@@ -346,9 +462,10 @@ local function CreateUI()
             ToggleButton.BackgroundColor3 = BlazixHub.Config[configKey] and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(80, 80, 80)
             ToggleButton.Text = BlazixHub.Config[configKey] and "ON" or "OFF"
             
-            -- Restart function when toggled
+            -- Special handling for each feature
             if configKey == "Fly" then
                 EnableFly()
+                ToggleMobileFlyButtons(BlazixHub.Config["Fly"])
             elseif configKey == "God Mode" then
                 EnableGodMode()
             elseif configKey == "Speed Boost" then
@@ -365,20 +482,24 @@ local function CreateUI()
         end)
     end
 
-    -- Add working toggles for Lucky Blocks
-    CreateWorkingToggle("🪽 Fly", "WASD + Space/Shift to fly", UDim2.new(0, 10, 0, 20), "Fly")
+    -- Add working toggles
+    CreateWorkingToggle("🪽 Fly", BlazixHub.IsMobile and "Use fly buttons on right" or "WASD + Space/Shift", UDim2.new(0, 10, 0, 20), "Fly")
     CreateWorkingToggle("🛡️ God Mode", "Become invincible", UDim2.new(0, 10, 0, 90), "God Mode")
     CreateWorkingToggle("⚡ Speed Boost", "100% movement speed", UDim2.new(0, 10, 0, 160), "Speed Boost")
-    CreateWorkingToggle("🦘 Infinite Jump", "Jump infinitely", UDim2.new(0, 10, 0, 230), "Infinite Jump")
+    CreateWorkingToggle("🦘 Infinite Jump", "Hold jump to fly up", UDim2.new(0, 10, 0, 230), "Infinite Jump")
     CreateWorkingToggle("👻 Noclip", "Walk through walls", UDim2.new(0, 10, 0, 300), "Noclip")
     CreateWorkingToggle("🎯 Auto Farm", "Auto collect lucky blocks", UDim2.new(0, 10, 0, 370), "Auto Farm")
 
     -- Controls Info
+    local controlsText = BlazixHub.IsMobile and 
+        "📱 MOBILE CONTROLS:\n• Fly: Use buttons on right\n• Infinite Jump: Hold jump button\n• All features work instantly!" or
+        "💻 PC CONTROLS:\n• Fly: WASD + Space/Shift\n• Infinite Jump: Hold Space\n• All features work instantly!"
+    
     local ControlsLabel = Instance.new("TextLabel")
-    ControlsLabel.Size = UDim2.new(1, -20, 0, 60)
+    ControlsLabel.Size = UDim2.new(1, -20, 0, 80)
     ControlsLabel.Position = UDim2.new(0, 10, 0, 440)
     ControlsLabel.BackgroundTransparency = 1
-    ControlsLabel.Text = "🎮 CONTROLS:\nFly: WASD + Space/Shift\nAll features work instantly!"
+    ControlsLabel.Text = controlsText
     ControlsLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
     ControlsLabel.Font = Enum.Font.Gotham
     ControlsLabel.TextSize = 12
@@ -395,7 +516,6 @@ local function CreateUI()
     CloseButton.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
         BlazixHub.Active = false
-        -- Disconnect all connections
         for _, connection in pairs(BlazixHub.Connections) do
             connection:Disconnect()
         end
@@ -414,13 +534,14 @@ end
 local UI = CreateUI()
 StartFunctions()
 
-print("🎮 BLAZIX HUB - LUCKY BLOCKS LOADED!")
-print("✅ Fly: W A S D + Space/Shift")
+print("🎮 BLAZIX HUB - UNIVERSAL LOADED!")
+print("📱 Platform: " .. (BlazixHub.IsMobile and "MOBILE" or "PC"))
+print("✅ Infinite Jump: Hold to fly up")
+print("✅ Fly: " .. (BlazixHub.IsMobile and "Use mobile buttons" or "WASD + Space/Shift"))
 print("✅ God Mode: Invincibility")
 print("✅ Speed Boost: 100% speed")
-print("✅ Infinite Jump: Unlimited jumps")
 print("✅ Noclip: Walk through walls")
 print("✅ Auto Farm: Collect lucky blocks")
 print("📍 Tap the BLAZIX button to open menu")
 
-warn("BLAZIX HUB FOR LUCKY BLOCKS IS WORKING!")
+warn("BLAZIX HUB UNIVERSAL IS WORKING! " .. (BlazixHub.IsMobile and "Mobile controls enabled!" or "PC controls enabled!"))
