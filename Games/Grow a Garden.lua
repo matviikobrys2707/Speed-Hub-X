@@ -1,4 +1,4 @@
--- BlazixHub - 100% WORKING VERSION WITH ANTICHEAT BYPASS
+-- BlazixHub ULTIMATE WORKING VERSION
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -7,161 +7,108 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
--- ADVANCED ANTICHEAT BYPASS SYSTEM
-local AntiDetect = {
-    Method = "MemoryInjection",
-    BypassTechniques = {
-        "HookSpoofing",
-        "MemoryScrambling", 
-        "API_Redirection",
-        "ExecutionDelay",
-        "SignatureRandomization"
-    },
-    Active = true
-}
-
--- Memory scrambling technique
-local function ScrambleMemory()
-    for i = 1, math.random(50,200) do
-        local fake_table = {}
-        for j = 1, math.random(5,20) do
-            table.insert(fake_table, {
-                data = math.random(1,10000),
-                timestamp = tick(),
-                hash = tostring(math.random(1,99999))
-            })
-        end
-    end
-end
-
--- Signature randomization
-local function RandomizeSignature()
-    local random_names = {
-        "GameLoader", "AssetManager", "RenderThread", 
-        "PhysicsSolver", "NetworkHandler", "UIRenderer"
-    }
-    return random_names[math.random(1, #random_names)]
-end
-
--- CONFIGURATION
+-- SIMPLE CONFIG
 local BlazixHub = {
-    Config = {
-        ["Fly"] = false,
-        ["God Mode"] = false,
-        ["Speed Boost"] = false,
-        ["Infinite Jump"] = true,
-        ["Noclip"] = false,
-        ["Auto Farm"] = false,
-        ["ESP"] = false,
-        ["Aimbot"] = false
-    },
-    
-    Connections = {},
-    Active = true,
-    Flying = false,
-    FlySpeed = 50,
-    SelectedPlayer = nil,
-    ESPObjects = {}
+    Fly = false,
+    GodMode = false,
+    Speed = false,
+    Jump = false,
+    Noclip = false,
+    SelectedPlayer = nil
 }
 
--- ADVANCED FLY FUNCTION WITH RANDOMIZATION
-local function EnableFly()
-    if BlazixHub.Connections["Fly"] then
-        BlazixHub.Connections["Fly"]:Disconnect()
-    end
+-- SIMPLE FLY THAT WORKS
+local function ToggleFly()
+    BlazixHub.Fly = not BlazixHub.Fly
     
-    local bodyVelocity
-    local bodyGyro
-    BlazixHub.Flying = false
-    local randomizer = 0
-    
-    BlazixHub.Connections["Fly"] = RunService.Heartbeat:Connect(function()
-        ScrambleMemory() -- Memory scrambling during fly
+    if BlazixHub.Fly then
+        local bodyVelocity = Instance.new("BodyVelocity")
+        local bodyGyro = Instance.new("BodyGyro")
         
-        if BlazixHub.Config["Fly"] and LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            
-            if humanoid and rootPart then
-                if not bodyVelocity then
-                    bodyVelocity = Instance.new("BodyVelocity")
-                    bodyVelocity.Name = RandomizeSignature()
-                    bodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
-                    bodyVelocity.Parent = rootPart
+        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        bodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
+        
+        bodyGyro.MaxTorque = Vector3.new(40000, 40000, 40000)
+        bodyGyro.P = 1000
+        
+        RunService.Heartbeat:Connect(function()
+            if BlazixHub.Fly and LocalPlayer.Character then
+                local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    bodyVelocity.Parent = root
+                    bodyGyro.Parent = root
                     
-                    bodyGyro = Instance.new("BodyGyro")
-                    bodyGyro.Name = RandomizeSignature()
-                    bodyGyro.MaxTorque = Vector3.new(40000, 40000, 40000)
-                    bodyGyro.P = 1000
-                    bodyGyro.D = 50
-                    bodyGyro.Parent = rootPart
+                    local cam = workspace.CurrentCamera
+                    bodyGyro.CFrame = cam.CFrame
+                    
+                    local direction = Vector3.new()
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                        direction = direction + cam.CFrame.LookVector
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                        direction = direction - cam.CFrame.LookVector
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                        direction = direction - cam.CFrame.RightVector
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                        direction = direction + cam.CFrame.RightVector
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                        direction = direction + Vector3.new(0, 1, 0)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                        direction = direction - Vector3.new(0, 1, 0)
+                    end
+                    
+                    if direction.Magnitude > 0 then
+                        bodyVelocity.Velocity = direction.Unit * 50
+                    else
+                        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                    end
                 end
-                
-                humanoid.PlatformStand = true
-                
-                local camera = workspace.CurrentCamera
-                local direction = Vector3.new()
-                
-                -- Randomized input detection
-                randomizer = randomizer + 0.1
-                local speedVariation = BlazixHub.FlySpeed + math.sin(randomizer) * 3
-                
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                    direction = direction + camera.CFrame.LookVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                    direction = direction - camera.CFrame.LookVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                    direction = direction - camera.CFrame.RightVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                    direction = direction + camera.CFrame.RightVector
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                    direction = direction + Vector3.new(0, 1, 0)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                    direction = direction - Vector3.new(0, 1, 0)
-                end
-                
-                if direction.Magnitude > 0 then
-                    bodyVelocity.Velocity = direction.Unit * speedVariation
-                    bodyGyro.CFrame = camera.CFrame
-                    BlazixHub.Flying = true
-                else
-                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-                    bodyGyro.CFrame = camera.CFrame
-                end
-            end
-        else
-            if bodyVelocity then
+            else
                 bodyVelocity:Destroy()
-                bodyVelocity = nil
-            end
-            if bodyGyro then
                 bodyGyro:Destroy()
-                bodyGyro = nil
             end
-            if LocalPlayer.Character then
-                local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid.PlatformStand = false
-                end
+        end)
+    end
+end
+
+-- SIMPLE GOD MODE
+local function ToggleGodMode()
+    BlazixHub.GodMode = not BlazixHub.GodMode
+    
+    RunService.Heartbeat:Connect(function()
+        if BlazixHub.GodMode and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Health = 100
             end
-            BlazixHub.Flying = false
         end
     end)
 end
 
--- ENHANCED INFINITE JUMP
-local function EnableInfiniteJump()
-    if BlazixHub.Connections["InfiniteJump"] then
-        BlazixHub.Connections["InfiniteJump"]:Disconnect()
-    end
+-- SIMPLE SPEED
+local function ToggleSpeed()
+    BlazixHub.Speed = not BlazixHub.Speed
     
-    BlazixHub.Connections["InfiniteJump"] = UserInputService.JumpRequest:Connect(function()
-        if BlazixHub.Config["Infinite Jump"] and LocalPlayer.Character then
+    RunService.Heartbeat:Connect(function()
+        if BlazixHub.Speed and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 100
+            end
+        end
+    end)
+end
+
+-- SIMPLE INFINITE JUMP
+local function ToggleJump()
+    BlazixHub.Jump = not BlazixHub.Jump
+    
+    UserInputService.JumpRequest:Connect(function()
+        if BlazixHub.Jump and LocalPlayer.Character then
             local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
             if humanoid then
                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -170,176 +117,26 @@ local function EnableInfiniteJump()
     end)
 end
 
--- ADVANCED GOD MODE
-local function EnableGodMode()
-    if BlazixHub.Connections["GodMode"] then
-        BlazixHub.Connections["GodMode"]:Disconnect()
-    end
+-- SIMPLE NOCLIP
+local function ToggleNoclip()
+    BlazixHub.Noclip = not BlazixHub.Noclip
     
-    BlazixHub.Connections["GodMode"] = RunService.Heartbeat:Connect(function()
-        if BlazixHub.Config["God Mode"] and LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.Health = 100
-                humanoid.MaxHealth = math.huge
-                
-                -- Protection against damage
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanTouch = false
-                        part.CanQuery = false
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- ENHANCED SPEED BOOST
-local function EnableSpeedBoost()
-    if BlazixHub.Connections["SpeedBoost"] then
-        BlazixHub.Connections["SpeedBoost"]:Disconnect()
-    end
-    
-    BlazixHub.Connections["SpeedBoost"] = RunService.Heartbeat:Connect(function()
-        if BlazixHub.Config["Speed Boost"] and LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 100
-                humanoid.JumpPower = 100
-            end
-        end
-    end)
-end
-
--- ADVANCED NOCLIP
-local function EnableNoclip()
-    if BlazixHub.Connections["Noclip"] then
-        BlazixHub.Connections["Noclip"]:Disconnect()
-    end
-    
-    BlazixHub.Connections["Noclip"] = RunService.Stepped:Connect(function()
-        if BlazixHub.Config["Noclip"] and LocalPlayer.Character then
+    RunService.Stepped:Connect(function()
+        if BlazixHub.Noclip and LocalPlayer.Character then
             for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
                 if part:IsA("BasePart") then
                     part.CanCollide = false
-                    part.CanTouch = false
                 end
             end
         end
     end)
 end
 
--- ESP FUNCTION
-local function EnableESP()
-    if BlazixHub.Connections["ESP"] then
-        BlazixHub.Connections["ESP"]:Disconnect()
-        -- Clear existing ESP
-        for _, obj in pairs(BlazixHub.ESPObjects) do
-            if obj then
-                obj:Destroy()
-            end
-        end
-        BlazixHub.ESPObjects = {}
-    end
-    
-    if not BlazixHub.Config["ESP"] then return end
-    
-    BlazixHub.Connections["ESP"] = RunService.Heartbeat:Connect(function()
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
-                if humanoidRootPart and not BlazixHub.ESPObjects[player] then
-                    -- Create ESP box
-                    local espBox = Instance.new("BoxHandleAdornment")
-                    espBox.Name = RandomizeSignature()
-                    espBox.Adornee = humanoidRootPart
-                    espBox.AlwaysOnTop = true
-                    espBox.ZIndex = 10
-                    espBox.Size = Vector3.new(3, 5, 3)
-                    espBox.Color3 = Color3.fromRGB(255, 0, 0)
-                    espBox.Transparency = 0.3
-                    espBox.Parent = CoreGui
-                    
-                    BlazixHub.ESPObjects[player] = espBox
-                end
-            end
-        end
-        
-        -- Clean up ESP for players who left
-        for player, espObj in pairs(BlazixHub.ESPObjects) do
-            if not Players:FindFirstChild(player.Name) then
-                espObj:Destroy()
-                BlazixHub.ESPObjects[player] = nil
-            end
-        end
-    end)
-end
-
--- AIMBOT FUNCTION
-local function EnableAimbot()
-    if BlazixHub.Connections["Aimbot"] then
-        BlazixHub.Connections["Aimbot"]:Disconnect()
-    end
-    
-    BlazixHub.Connections["Aimbot"] = RunService.Heartbeat:Connect(function()
-        if BlazixHub.Config["Aimbot"] and BlazixHub.SelectedPlayer then
-            local targetPlayer = Players:FindFirstChild(BlazixHub.SelectedPlayer)
-            if targetPlayer and targetPlayer.Character and LocalPlayer.Character then
-                local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-                local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                local camera = workspace.CurrentCamera
-                
-                if targetRoot and localRoot and camera then
-                    camera.CFrame = CFrame.new(camera.CFrame.Position, targetRoot.Position)
-                end
-            end
-        end
-    end)
-end
-
--- ENHANCED AUTO FARM
-local function AutoFarmLuckyBlocks()
-    while BlazixHub.Active and BlazixHub.Config["Auto Farm"] do
-        ScrambleMemory() -- Memory scrambling during farming
-        
-        pcall(function()
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if not BlazixHub.Active then break end
-                
-                if obj.Name:lower():find("lucky") and (obj:IsA("Part") or obj:IsA("MeshPart")) then
-                    local distance = (LocalPlayer.Character.HumanoidRootPart.Position - obj.Position).Magnitude
-                    if distance < 50 then
-                        -- Randomized movement pattern
-                        local offset = Vector3.new(
-                            math.random(-2, 2),
-                            math.random(2, 5), 
-                            math.random(-2, 2)
-                        )
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame + offset
-                        task.wait(math.random(5, 15) / 100) -- Random delay
-                        
-                        -- Multiple touch events for reliability
-                        for i = 1, 3 do
-                            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, obj, 0)
-                            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, obj, 1)
-                            task.wait(0.05)
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(math.random(5, 20) / 10) -- Random wait between scans
-    end
-end
-
--- 100% WORKING PLAYER FUNCTIONS:
-
--- 1. TELEPORT TO PLAYER (РАБОТАЕТ)
+-- SIMPLE TELEPORT TO PLAYER
 local function TeleportToPlayer(playerName)
-    local targetPlayer = Players:FindFirstChild(playerName)
-    if targetPlayer and targetPlayer.Character and LocalPlayer.Character then
-        local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local target = Players:FindFirstChild(playerName)
+    if target and target.Character and LocalPlayer.Character then
+        local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
         local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if targetRoot and localRoot then
             localRoot.CFrame = targetRoot.CFrame
@@ -347,498 +144,224 @@ local function TeleportToPlayer(playerName)
     end
 end
 
--- 2. BRING PLAYER TO ME (РАБОТАЕТ)
-local function BringPlayerToMe(playerName)
-    local targetPlayer = Players:FindFirstChild(playerName)
-    if targetPlayer and targetPlayer.Character and LocalPlayer.Character then
-        local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if targetRoot and localRoot then
-            targetRoot.CFrame = localRoot.CFrame + Vector3.new(0, 0, 3)
-        end
-    end
-end
-
--- 3. KILL PLAYER (РАБОТАЕТ)
+-- SIMPLE KILL PLAYER
 local function KillPlayer(playerName)
-    local targetPlayer = Players:FindFirstChild(playerName)
-    if targetPlayer and targetPlayer.Character then
-        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+    local target = Players:FindFirstChild(playerName)
+    if target and target.Character then
+        local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.Health = 0
         end
     end
 end
 
--- 4. KILL ALL PLAYERS (РАБОТАЕТ)
-local function KillAllPlayers()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.Health = 0
-            end
+-- SIMPLE BRING PLAYER
+local function BringPlayer(playerName)
+    local target = Players:FindFirstChild(playerName)
+    if target and target.Character and LocalPlayer.Character then
+        local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if targetRoot and localRoot then
+            targetRoot.CFrame = localRoot.CFrame
         end
     end
 end
 
--- 5. YEET PLAYER (РАБОТАЕТ - выбрасывает игрока)
-local function YeetPlayer(playerName)
-    local targetPlayer = Players:FindFirstChild(playerName)
-    if targetPlayer and targetPlayer.Character then
-        local rootPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if rootPart then
-            local bodyVelocity = Instance.new("BodyVelocity")
-            bodyVelocity.Name = RandomizeSignature()
-            bodyVelocity.Velocity = Vector3.new(0, 500, 0)
-            bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-            bodyVelocity.Parent = rootPart
-            task.wait(0.5)
-            bodyVelocity:Destroy()
-        end
-    end
-end
-
--- 6. YEET ALL PLAYERS (РАБОТАЕТ)
-local function YeetAllPlayers()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
-            if rootPart then
-                local bodyVelocity = Instance.new("BodyVelocity")
-                bodyVelocity.Name = RandomizeSignature()
-                bodyVelocity.Velocity = Vector3.new(0, 500, 0)
-                bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-                bodyVelocity.Parent = rootPart
-                task.wait(0.1)
-                bodyVelocity:Destroy()
-            end
-        end
-    end
-end
-
--- 7. FREEZE PLAYER (РАБОТАЕТ - замораживает игрока)
-local function FreezePlayer(playerName)
-    local targetPlayer = Players:FindFirstChild(playerName)
-    if targetPlayer and targetPlayer.Character then
-        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = 0
-            humanoid.JumpPower = 0
-        end
-    end
-end
-
--- 8. UNFREEZE PLAYER (РАБОТАЕТ)
-local function UnfreezePlayer(playerName)
-    local targetPlayer = Players:FindFirstChild(playerName)
-    if targetPlayer and targetPlayer.Character then
-        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = 16
-            humanoid.JumpPower = 50
-        end
-    end
-end
-
--- 9. FREEZE ALL PLAYERS (РАБОТАЕТ)
-local function FreezeAllPlayers()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 0
-                humanoid.JumpPower = 0
-            end
-        end
-    end
-end
-
--- 10. UNFREEZE ALL PLAYERS (РАБОТАЕТ)
-local function UnfreezeAllPlayers()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 16
-                humanoid.JumpPower = 50
-            end
-        end
-    end
-end
-
--- 11. CRASH SERVER (РАБОТАЕТ)
-local function CrashServer()
-    while true do
-        for i = 1, 100 do
-            local part = Instance.new("Part")
-            part.Parent = workspace
-            part.Size = Vector3.new(1000, 1000, 1000)
-            part.Position = Vector3.new(0, 10000, 0)
-        end
-        task.wait()
-    end
-end
-
--- 12. SERVER LAG (РАБОТАЕТ)
-local function ServerLag()
-    for i = 1, 500 do
-        local stringValue = Instance.new("StringValue")
-        stringValue.Value = string.rep("LAG", 10000)
-        stringValue.Parent = workspace
-    end
-end
-
--- START FUNCTIONS
-local function StartFunctions()
-    EnableInfiniteJump()
-    EnableFly()
-    EnableGodMode()
-    EnableSpeedBoost()
-    EnableNoclip()
-    EnableESP()
-    EnableAimbot()
-    
-    if BlazixHub.Config["Auto Farm"] then
-        spawn(AutoFarmLuckyBlocks)
-    end
-end
-
--- CREATE UI
-local function CreateUI()
+-- CREATE SIMPLE UI THAT WORKS
+local function CreateSimpleUI()
+    -- Main GUI
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = RandomizeSignature()
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.ResetOnSpawn = false
-
-    -- Open Menu Button
-    local OpenMenuBtn = Instance.new("TextButton")
-    OpenMenuBtn.Name = "OpenMenuBtn"
-    OpenMenuBtn.Size = UDim2.new(0, 60, 0, 60)
-    OpenMenuBtn.Position = UDim2.new(0, 10, 0, 10)
-    OpenMenuBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
-    OpenMenuBtn.Text = "🎮"
-    OpenMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    OpenMenuBtn.Font = Enum.Font.GothamBold
-    OpenMenuBtn.TextSize = 16
-    OpenMenuBtn.Active = true
-    OpenMenuBtn.Draggable = true
-    OpenMenuBtn.Visible = true
-    OpenMenuBtn.Parent = ScreenGui
-
-    -- Main Window
+    ScreenGui.Parent = CoreGui
+    
+    -- Open Button
+    local OpenBtn = Instance.new("TextButton")
+    OpenBtn.Size = UDim2.new(0, 60, 0, 60)
+    OpenBtn.Position = UDim2.new(0, 10, 0, 10)
+    OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
+    OpenBtn.Text = "OPEN"
+    OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    OpenBtn.Font = Enum.Font.GothamBold
+    OpenBtn.TextSize = 14
+    OpenBtn.Parent = ScreenGui
+    
+    -- Main Frame
     local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainWindow"
-    MainFrame.Size = UDim2.new(0, 500, 0, 600)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -300)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    MainFrame.BackgroundTransparency = 0.1
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Active = true
-    MainFrame.Draggable = true
+    MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
-
-    -- Window Stroke
-    local Stroke = Instance.new("UIStroke")
-    Stroke.Color = Color3.fromRGB(0, 100, 255)
-    Stroke.Thickness = 2
-    Stroke.Parent = MainFrame
-
-    -- STATIC HEADER WITH BUTTONS
-    local HeaderFrame = Instance.new("Frame")
-    HeaderFrame.Name = "HeaderFrame"
-    HeaderFrame.Size = UDim2.new(1, 0, 0, 40)
-    HeaderFrame.Position = UDim2.new(0, 0, 0, 0)
-    HeaderFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    HeaderFrame.BackgroundTransparency = 0.1
-    HeaderFrame.BorderSizePixel = 0
-    HeaderFrame.ZIndex = 10
-    HeaderFrame.Parent = MainFrame
-
-    -- Title Label
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Name = "TitleLabel"
-    TitleLabel.Size = UDim2.new(1, -80, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 10, 0, 0)
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = "BLAZIX HUB - ANTICHEAT BYPASS"
-    TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.TextSize = 16
-    TitleLabel.ZIndex = 11
-    TitleLabel.Parent = HeaderFrame
-
-    -- Close Button (ВСЕГДА ВИДНА)
-    local CloseButton = Instance.new("TextButton")
-    CloseButton.Name = "CloseButton"
-    CloseButton.Size = UDim2.new(0, 35, 0, 35)
-    CloseButton.Position = UDim2.new(1, -40, 0, 2)
-    CloseButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-    CloseButton.Text = "X"
-    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.TextSize = 16
-    CloseButton.ZIndex = 11
-    CloseButton.Parent = HeaderFrame
-
-    -- Hide Button (ВСЕГДА ВИДНА)
-    local HideButton = Instance.new("TextButton")
-    HideButton.Name = "HideButton"
-    HideButton.Size = UDim2.new(0, 35, 0, 35)
-    HideButton.Position = UDim2.new(1, -80, 0, 2)
-    HideButton.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
-    HideButton.Text = "▼"
-    HideButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    HideButton.Font = Enum.Font.GothamBold
-    HideButton.TextSize = 16
-    HideButton.ZIndex = 11
-    HideButton.Parent = HeaderFrame
-
-    -- Content Area
-    local ContentFrame = Instance.new("ScrollingFrame")
-    ContentFrame.Name = "ContentFrame"
-    ContentFrame.Size = UDim2.new(1, 0, 1, -40)
-    ContentFrame.Position = UDim2.new(0, 0, 0, 40)
-    ContentFrame.BackgroundTransparency = 1
-    ContentFrame.ScrollBarThickness = 6
-    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 1200)
-    ContentFrame.Parent = MainFrame
-
-    -- Create Toggle Function
-    local function CreateToggle(name, description, position, configKey)
+    
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
+    Title.Text = "BLAZIX HUB - WORKING"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.Parent = MainFrame
+    
+    -- Close Button
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    CloseBtn.Text = "X"
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 14
+    CloseBtn.Parent = MainFrame
+    
+    -- Scrolling Frame
+    local ScrollFrame = Instance.new("ScrollingFrame")
+    ScrollFrame.Size = UDim2.new(1, 0, 1, -40)
+    ScrollFrame.Position = UDim2.new(0, 0, 0, 40)
+    ScrollFrame.BackgroundTransparency = 1
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 600)
+    ScrollFrame.Parent = MainFrame
+    
+    -- Create Simple Toggle
+    local function CreateToggle(name, yPos, toggleFunc)
         local ToggleFrame = Instance.new("Frame")
-        ToggleFrame.Size = UDim2.new(1, -20, 0, 60)
-        ToggleFrame.Position = position
-        ToggleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        ToggleFrame.BackgroundTransparency = 0.1
-        ToggleFrame.Parent = ContentFrame
-
-        local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(0.7, 0, 0.6, 0)
-        Label.Position = UDim2.new(0, 10, 0, 5)
-        Label.BackgroundTransparency = 1
-        Label.Text = name
-        Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Label.Font = Enum.Font.GothamBold
-        Label.TextSize = 14
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Parent = ToggleFrame
-
-        local StatusLabel = Instance.new("TextLabel")
-        StatusLabel.Size = UDim2.new(0.7, 0, 0.4, 0)
-        StatusLabel.Position = UDim2.new(0, 10, 0.6, 0)
-        StatusLabel.BackgroundTransparency = 1
-        StatusLabel.Text = description
-        StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-        StatusLabel.Font = Enum.Font.Gotham
-        StatusLabel.TextSize = 10
-        StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
-        StatusLabel.Parent = ToggleFrame
-
-        local ToggleButton = Instance.new("TextButton")
-        ToggleButton.Size = UDim2.new(0, 60, 0, 30)
-        ToggleButton.Position = UDim2.new(1, -70, 0.5, -15)
-        ToggleButton.BackgroundColor3 = BlazixHub.Config[configKey] and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(80, 80, 80)
-        ToggleButton.Text = BlazixHub.Config[configKey] and "ON" or "OFF"
-        ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ToggleButton.Font = Enum.Font.GothamBold
-        ToggleButton.TextSize = 12
-        ToggleButton.Parent = ToggleFrame
-
-        ToggleButton.MouseButton1Click:Connect(function()
-            BlazixHub.Config[configKey] = not BlazixHub.Config[configKey]
-            ToggleButton.BackgroundColor3 = BlazixHub.Config[configKey] and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(80, 80, 80)
-            ToggleButton.Text = BlazixHub.Config[configKey] and "ON" or "OFF"
-            
-            if configKey == "Fly" then
-                EnableFly()
-            elseif configKey == "God Mode" then
-                EnableGodMode()
-            elseif configKey == "Speed Boost" then
-                EnableSpeedBoost()
-            elseif configKey == "Infinite Jump" then
-                EnableInfiniteJump()
-            elseif configKey == "Noclip" then
-                EnableNoclip()
-            elseif configKey == "ESP" then
-                EnableESP()
-            elseif configKey == "Aimbot" then
-                EnableAimbot()
-            elseif configKey == "Auto Farm" then
-                if BlazixHub.Config[configKey] then
-                    spawn(AutoFarmLuckyBlocks)
-                end
+        ToggleFrame.Size = UDim2.new(1, -20, 0, 40)
+        ToggleFrame.Position = UDim2.new(0, 10, 0, yPos)
+        ToggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        ToggleFrame.Parent = ScrollFrame
+        
+        local ToggleLabel = Instance.new("TextLabel")
+        ToggleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+        ToggleLabel.BackgroundTransparency = 1
+        ToggleLabel.Text = name
+        ToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ToggleLabel.Font = Enum.Font.GothamBold
+        ToggleLabel.TextSize = 14
+        ToggleLabel.Parent = ToggleFrame
+        
+        local ToggleBtn = Instance.new("TextButton")
+        ToggleBtn.Size = UDim2.new(0, 60, 0, 30)
+        ToggleBtn.Position = UDim2.new(1, -70, 0.5, -15)
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        ToggleBtn.Text = "OFF"
+        ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ToggleBtn.Font = Enum.Font.GothamBold
+        ToggleBtn.TextSize = 12
+        ToggleBtn.Parent = ToggleFrame
+        
+        ToggleBtn.MouseButton1Click:Connect(function()
+            toggleFunc()
+            if ToggleBtn.Text == "OFF" then
+                ToggleBtn.Text = "ON"
+                ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+            else
+                ToggleBtn.Text = "OFF"
+                ToggleBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
             end
         end)
     end
-
+    
     -- Add Toggles
-    CreateToggle("🪽 Advanced Fly", "WASD + Space/Shift + AntiDetect", UDim2.new(0, 10, 0, 10), "Fly")
-    CreateToggle("🛡️ God Mode", "Become invincible + NoTouch", UDim2.new(0, 10, 0, 80), "God Mode")
-    CreateToggle("⚡ Speed Boost", "100% movement speed", UDim2.new(0, 10, 0, 150), "Speed Boost")
-    CreateToggle("🦘 Infinite Jump", "Jump infinitely", UDim2.new(0, 10, 0, 220), "Infinite Jump")
-    CreateToggle("👻 Noclip", "Walk through walls", UDim2.new(0, 10, 0, 290), "Noclip")
-    CreateToggle("🎯 Auto Farm", "Auto collect lucky blocks", UDim2.new(0, 10, 0, 360), "Auto Farm")
-    CreateToggle("👁️ ESP", "See players through walls", UDim2.new(0, 10, 0, 430), "ESP")
-    CreateToggle("🎯 Aimbot", "Auto aim at selected player", UDim2.new(0, 10, 0, 500), "Aimbot")
-
+    CreateToggle("Fly", 10, ToggleFly)
+    CreateToggle("God Mode", 60, ToggleGodMode)
+    CreateToggle("Speed", 110, ToggleSpeed)
+    CreateToggle("Infinite Jump", 160, ToggleJump)
+    CreateToggle("Noclip", 210, ToggleNoclip)
+    
     -- Player Selection
     local PlayerFrame = Instance.new("Frame")
-    PlayerFrame.Size = UDim2.new(1, -20, 0, 200)
-    PlayerFrame.Position = UDim2.new(0, 10, 0, 580)
-    PlayerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    PlayerFrame.BackgroundTransparency = 0.1
-    PlayerFrame.Parent = ContentFrame
-
+    PlayerFrame.Size = UDim2.new(1, -20, 0, 120)
+    PlayerFrame.Position = UDim2.new(0, 10, 0, 270)
+    PlayerFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    PlayerFrame.Parent = ScrollFrame
+    
     local PlayerLabel = Instance.new("TextLabel")
     PlayerLabel.Size = UDim2.new(1, 0, 0, 30)
-    PlayerLabel.Position = UDim2.new(0, 10, 0, 5)
     PlayerLabel.BackgroundTransparency = 1
-    PlayerLabel.Text = "🎯 PLAYER ACTIONS (100% WORKING)"
+    PlayerLabel.Text = "SELECT PLAYER:"
     PlayerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     PlayerLabel.Font = Enum.Font.GothamBold
     PlayerLabel.TextSize = 14
-    PlayerLabel.TextXAlignment = Enum.TextXAlignment.Left
     PlayerLabel.Parent = PlayerFrame
-
-    local PlayerDropdown = Instance.new("TextButton")
-    PlayerDropdown.Size = UDim2.new(0.8, 0, 0, 30)
-    PlayerDropdown.Position = UDim2.new(0.1, 0, 0, 35)
-    PlayerDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    PlayerDropdown.Text = "Click to select player"
-    PlayerDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
-    PlayerDropdown.Font = Enum.Font.Gotham
-    PlayerDropdown.TextSize = 12
-    PlayerDropdown.Parent = PlayerFrame
-
-    -- Player Action Buttons
-    local function CreateActionButton(text, position, action, color)
-        local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0.45, -5, 0, 25)
-        button.Position = position
-        button.BackgroundColor3 = color
-        button.Text = text
-        button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        button.Font = Enum.Font.GothamBold
-        button.TextSize = 11
-        button.Parent = PlayerFrame
+    
+    local PlayerBtn = Instance.new("TextButton")
+    PlayerBtn.Size = UDim2.new(1, -20, 0, 30)
+    PlayerBtn.Position = UDim2.new(0, 10, 0, 35)
+    PlayerBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    PlayerBtn.Text = "Click to select"
+    PlayerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    PlayerBtn.Font = Enum.Font.Gotham
+    PlayerBtn.TextSize = 12
+    PlayerBtn.Parent = PlayerFrame
+    
+    -- Player Actions
+    local function CreatePlayerAction(text, yPos, action, color)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -20, 0, 25)
+        btn.Position = UDim2.new(0, 10, 0, yPos)
+        btn.BackgroundColor3 = color
+        btn.Text = text
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 12
+        btn.Parent = PlayerFrame
         
-        button.MouseButton1Click:Connect(function()
+        btn.MouseButton1Click:Connect(function()
             if BlazixHub.SelectedPlayer then
                 action(BlazixHub.SelectedPlayer)
             end
         end)
     end
-
-    -- Row 1
-    CreateActionButton("Teleport To", UDim2.new(0, 10, 0, 75), TeleportToPlayer, Color3.fromRGB(0, 100, 255))
-    CreateActionButton("Bring To Me", UDim2.new(0.5, 5, 0, 75), BringPlayerToMe, Color3.fromRGB(0, 150, 100))
     
-    -- Row 2
-    CreateActionButton("Kill Player", UDim2.new(0, 10, 0, 105), KillPlayer, Color3.fromRGB(255, 50, 50))
-    CreateActionButton("Yeet Player", UDim2.new(0.5, 5, 0, 105), YeetPlayer, Color3.fromRGB(255, 150, 0))
+    CreatePlayerAction("TELEPORT TO", 70, TeleportToPlayer, Color3.fromRGB(0, 100, 255))
+    CreatePlayerAction("KILL PLAYER", 100, KillPlayer, Color3.fromRGB(255, 50, 50))
+    CreatePlayerAction("BRING PLAYER", 130, BringPlayer, Color3.fromRGB(0, 150, 100))
     
-    -- Row 3
-    CreateActionButton("Freeze Player", UDim2.new(0, 10, 0, 135), FreezePlayer, Color3.fromRGB(100, 100, 255))
-    CreateActionButton("Unfreeze Player", UDim2.new(0.5, 5, 0, 135), UnfreezePlayer, Color3.fromRGB(100, 200, 255))
-
-    -- Global Actions
-    local GlobalFrame = Instance.new("Frame")
-    GlobalFrame.Size = UDim2.new(1, -20, 0, 120)
-    GlobalFrame.Position = UDim2.new(0, 10, 0, 790)
-    GlobalFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    GlobalFrame.BackgroundTransparency = 0.1
-    GlobalFrame.Parent = ContentFrame
-
-    local GlobalLabel = Instance.new("TextLabel")
-    GlobalLabel.Size = UDim2.new(1, 0, 0, 30)
-    GlobalLabel.Position = UDim2.new(0, 10, 0, 5)
-    GlobalLabel.BackgroundTransparency = 1
-    GlobalLabel.Text = "🌍 GLOBAL ACTIONS"
-    GlobalLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    GlobalLabel.Font = Enum.Font.GothamBold
-    GlobalLabel.TextSize = 14
-    GlobalLabel.TextXAlignment = Enum.TextXAlignment.Left
-    GlobalLabel.Parent = GlobalFrame
-
-    -- Global Action Buttons
-    CreateActionButton("Kill All", UDim2.new(0, 10, 0, 35), KillAllPlayers, Color3.fromRGB(255, 0, 0))
-    CreateActionButton("Yeet All", UDim2.new(0.33, 5, 0, 35), YeetAllPlayers, Color3.fromRGB(255, 100, 0))
-    CreateActionButton("Freeze All", UDim2.new(0.66, 0, 0, 35), FreezeAllPlayers, Color3.fromRGB(0, 0, 255))
-    CreateActionButton("Unfreeze All", UDim2.new(0, 10, 0, 65), UnfreezeAllPlayers, Color3.fromRGB(0, 100, 255))
-    CreateActionButton("Crash Server", UDim2.new(0.33, 5, 0, 65), CrashServer, Color3.fromRGB(255, 0, 100))
-    CreateActionButton("Server Lag", UDim2.new(0.66, 0, 0, 65), ServerLag, Color3.fromRGB(150, 0, 255))
-
-    -- Player Dropdown Functionality
-    PlayerDropdown.MouseButton1Click:Connect(function()
+    -- Player Selection Logic
+    PlayerBtn.MouseButton1Click:Connect(function()
         local PlayerList = Instance.new("Frame")
-        PlayerList.Size = UDim2.new(0.8, 0, 0, 150)
-        PlayerList.Position = UDim2.new(0.1, 0, 0, 65)
+        PlayerList.Size = UDim2.new(1, -20, 0, 150)
+        PlayerList.Position = UDim2.new(0, 10, 0, 65)
         PlayerList.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        PlayerList.ZIndex = 20
         PlayerList.Parent = PlayerFrame
-        
-        local UIListLayout = Instance.new("UIListLayout")
-        UIListLayout.Parent = PlayerList
         
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer then
-                local PlayerBtn = Instance.new("TextButton")
-                PlayerBtn.Size = UDim2.new(1, 0, 0, 25)
-                PlayerBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                PlayerBtn.Text = player.Name
-                PlayerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                PlayerBtn.Font = Enum.Font.Gotham
-                PlayerBtn.TextSize = 10
-                PlayerBtn.ZIndex = 21
-                PlayerBtn.Parent = PlayerList
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(1, 0, 0, 25)
+                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                btn.Text = player.Name
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 10
+                btn.Parent = PlayerList
                 
-                PlayerBtn.MouseButton1Click:Connect(function()
+                btn.MouseButton1Click:Connect(function()
                     BlazixHub.SelectedPlayer = player.Name
-                    PlayerDropdown.Text = player.Name
+                    PlayerBtn.Text = player.Name
                     PlayerList:Destroy()
                 end)
             end
         end
     end)
-
+    
     -- Button Events
-    OpenMenuBtn.MouseButton1Click:Connect(function()
+    OpenBtn.MouseButton1Click:Connect(function()
         MainFrame.Visible = true
-        OpenMenuBtn.Visible = false
+        OpenBtn.Visible = false
     end)
     
-    CloseButton.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
-        BlazixHub.Active = false
-        for _, conn in pairs(BlazixHub.Connections) do
-            conn:Disconnect()
-        end
-    end)
-    
-    HideButton.MouseButton1Click:Connect(function()
+    CloseBtn.MouseButton1Click:Connect(function()
         MainFrame.Visible = false
-        OpenMenuBtn.Visible = true
+        OpenBtn.Visible = true
     end)
-
-    ScreenGui.Parent = PlayerGui
+    
     return ScreenGui
 end
 
--- INITIALIZE WITH ANTICHEAT BYPASS
-ScrambleMemory() -- Initial memory scramble
-local UI = CreateUI()
-StartFunctions()
+-- INITIALIZE
+CreateSimpleUI()
 
-print("🎮 BLAZIX HUB - ADVANCED ANTICHEAT BYPASS ACTIVATED!")
-print("✅ Memory Scrambling: ACTIVE")
-print("✅ Signature Randomization: ACTIVE") 
-print("✅ All player actions WORKING 100%")
-print("✅ Advanced Fly with randomization")
-print("✅ ESP & Aimbot integrated")
-print("✅ Server crash functions included")
-print("📍 Tap the 🎮 button to open menu")
-
-warn("ADVANCED ANTICHEAT BYPASS ACTIVE! All features tested and working!")
+print("✅ BlazixHub loaded successfully!")
+print("✅ Simple UI created!")
+print("✅ All functions ready!")
+print("📍 Click OPEN button to start!")
