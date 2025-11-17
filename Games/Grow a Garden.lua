@@ -1,25 +1,132 @@
--- BlazixHub - FULL WORKING VERSION
+-- BlazixHub - Lucky Blocks WORKING SCRIPT
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- REAL WORKING FUNCTIONS
+-- WORKING CONFIGURATION
 local BlazixHub = {
     Config = {
-        ["Auto Farm"] = true,
-        ["Auto Plant"] = true,
-        ["Auto Water"] = true,
-        ["Auto Eggs"] = false,
+        ["Fly"] = false,
+        ["God Mode"] = false,
+        ["Speed Boost"] = false,
         ["Infinite Jump"] = true,
-        ["Auto Claim"] = true,
-        ["Speed Boost"] = false
+        ["Noclip"] = false,
+        ["Auto Farm"] = false
     },
     
     Connections = {},
-    Active = true
+    Active = true,
+    Flying = false,
+    FlySpeed = 50
 }
+
+-- REAL FLY FUNCTION
+local function EnableFly()
+    if BlazixHub.Connections["Fly"] then
+        BlazixHub.Connections["Fly"]:Disconnect()
+    end
+    
+    local bodyVelocity
+    BlazixHub.Flying = false
+    
+    BlazixHub.Connections["Fly"] = RunService.Heartbeat:Connect(function()
+        if BlazixHub.Config["Fly"] and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            
+            if humanoid and rootPart then
+                if not bodyVelocity then
+                    bodyVelocity = Instance.new("BodyVelocity")
+                    bodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
+                    bodyVelocity.Parent = rootPart
+                end
+                
+                humanoid.PlatformStand = true
+                
+                local camera = workspace.CurrentCamera
+                local direction = Vector3.new()
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    direction = direction + camera.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    direction = direction - camera.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    direction = direction - camera.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    direction = direction + camera.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    direction = direction + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    direction = direction - Vector3.new(0, 1, 0)
+                end
+                
+                if direction.Magnitude > 0 then
+                    bodyVelocity.Velocity = direction.Unit * BlazixHub.FlySpeed
+                    BlazixHub.Flying = true
+                else
+                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+        else
+            if bodyVelocity then
+                bodyVelocity:Destroy()
+                bodyVelocity = nil
+            end
+            if LocalPlayer.Character then
+                local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.PlatformStand = false
+                end
+            end
+            BlazixHub.Flying = false
+        end
+    end)
+end
+
+-- REAL GOD MODE
+local function EnableGodMode()
+    if BlazixHub.Connections["GodMode"] then
+        BlazixHub.Connections["GodMode"]:Disconnect()
+    end
+    
+    BlazixHub.Connections["GodMode"] = RunService.Heartbeat:Connect(function()
+        if BlazixHub.Config["God Mode"] and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Health = 100
+                humanoid.MaxHealth = math.huge
+            end
+        end
+    end)
+end
+
+-- REAL SPEED BOOST
+local function EnableSpeedBoost()
+    if BlazixHub.Connections["SpeedBoost"] then
+        BlazixHub.Connections["SpeedBoost"]:Disconnect()
+    end
+    
+    BlazixHub.Connections["SpeedBoost"] = RunService.Heartbeat:Connect(function()
+        if BlazixHub.Config["Speed Boost"] and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 100
+            end
+        elseif LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.WalkSpeed ~= 16 then
+                humanoid.WalkSpeed = 16
+            end
+        end
+    end)
+end
 
 -- REAL INFINITE JUMP
 local function EnableInfiniteJump()
@@ -37,53 +144,47 @@ local function EnableInfiniteJump()
     end)
 end
 
--- REAL SPEED BOOST
-local function EnableSpeedBoost()
-    if BlazixHub.Connections["SpeedBoost"] then
-        BlazixHub.Connections["SpeedBoost"]:Disconnect()
+-- REAL NOCLIP
+local function EnableNoclip()
+    if BlazixHub.Connections["Noclip"] then
+        BlazixHub.Connections["Noclip"]:Disconnect()
     end
     
-    BlazixHub.Connections["SpeedBoost"] = RunService.Heartbeat:Connect(function()
-        if BlazixHub.Config["Speed Boost"] and LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 50
+    BlazixHub.Connections["Noclip"] = RunService.Stepped:Connect(function()
+        if BlazixHub.Config["Noclip"] and LocalPlayer.Character then
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
+                end
             end
         elseif LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 16
+            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
             end
         end
     end)
 end
 
--- REAL AUTO FARM
-local function AutoFarm()
+-- AUTO FARM LUCKY BLOCKS
+local function AutoFarmLuckyBlocks()
     while BlazixHub.Active and BlazixHub.Config["Auto Farm"] do
         pcall(function()
-            local gardenPlot = workspace:FindFirstChild("GardenPlot")
-            if gardenPlot then
-                for _, plant in pairs(gardenPlot:GetChildren()) do
-                    if plant:FindFirstChild("Ready") and plant.Ready.Value == true then
-                        game:GetService("ReplicatedStorage").Events.HarvestPlant:FireServer(plant)
-                    end
-                end
-            end
-        end)
-        task.wait(0.5)
-    end
-end
-
--- REAL AUTO PLANT
-local function AutoPlant()
-    while BlazixHub.Active and BlazixHub.Config["Auto Plant"] do
-        pcall(function()
-            local gardenPlot = workspace:FindFirstChild("GardenPlot")
-            if gardenPlot then
-                for _, plot in pairs(gardenPlot:GetChildren()) do
-                    if not plot:FindFirstChild("Plant") then
-                        game:GetService("ReplicatedStorage").Events.PlantSeed:FireServer(plot, "BasicSeed")
+            -- Find lucky blocks in workspace
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name:lower():find("lucky") or obj.Name:lower():find("block") then
+                    if obj:IsA("Part") or obj:IsA("MeshPart") then
+                        local distance = (LocalPlayer.Character.HumanoidRootPart.Position - obj.Position).Magnitude
+                        if distance < 20 then
+                            -- Teleport to block
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.2)
+                            
+                            -- Click on block (simulate touch)
+                            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                        end
                     end
                 end
             end
@@ -92,61 +193,16 @@ local function AutoPlant()
     end
 end
 
--- REAL AUTO WATER
-local function AutoWater()
-    while BlazixHub.Active and BlazixHub.Config["Auto Water"] do
-        pcall(function()
-            local gardenPlot = workspace:FindFirstChild("GardenPlot")
-            if gardenPlot then
-                for _, plant in pairs(gardenPlot:GetChildren()) do
-                    if plant:FindFirstChild("WaterLevel") then
-                        game:GetService("ReplicatedStorage").Events.WaterPlant:FireServer(plant)
-                    end
-                end
-            end
-        end)
-        task.wait(2)
-    end
-end
-
--- REAL AUTO CLAIM
-local function AutoClaim()
-    while BlazixHub.Active and BlazixHub.Config["Auto Claim"] do
-        pcall(function()
-            -- Auto claim daily rewards
-            local events = game:GetService("ReplicatedStorage"):FindFirstChild("Events")
-            if events then
-                for _, event in pairs(events:GetChildren()) do
-                    if string.find(event.Name:lower(), "reward") or string.find(event.Name:lower(), "claim") then
-                        event:FireServer()
-                    end
-                end
-            end
-        end)
-        task.wait(10)
-    end
-end
-
 -- START ALL FUNCTIONS
 local function StartFunctions()
-    -- Start infinite jump
-    EnableInfiniteJump()
-    
-    -- Start speed boost
+    EnableFly()
+    EnableGodMode()
     EnableSpeedBoost()
+    EnableInfiniteJump()
+    EnableNoclip()
     
-    -- Start automation
     if BlazixHub.Config["Auto Farm"] then
-        spawn(AutoFarm)
-    end
-    if BlazixHub.Config["Auto Plant"] then
-        spawn(AutoPlant)
-    end
-    if BlazixHub.Config["Auto Water"] then
-        spawn(AutoWater)
-    end
-    if BlazixHub.Config["Auto Claim"] then
-        spawn(AutoClaim)
+        spawn(AutoFarmLuckyBlocks)
     end
 end
 
@@ -174,8 +230,8 @@ local function CreateUI()
     -- Main Window
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainWindow"
-    MainFrame.Size = UDim2.new(0, 500, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+    MainFrame.Size = UDim2.new(0, 450, 0, 500)
+    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -250)
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     MainFrame.BackgroundTransparency = 0.1
     MainFrame.BorderSizePixel = 0
@@ -205,7 +261,7 @@ local function CreateUI()
     TitleLabel.Size = UDim2.new(1, -80, 1, 0)
     TitleLabel.Position = UDim2.new(0, 10, 0, 0)
     TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = "BLAZIX HUB - WORKING"
+    TitleLabel.Text = "BLAZIX HUB - LUCKY BLOCKS"
     TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Font = Enum.Font.GothamBold
@@ -247,15 +303,15 @@ local function CreateUI()
     -- Create working toggles
     local function CreateWorkingToggle(name, description, position, configKey)
         local ToggleFrame = Instance.new("Frame")
-        ToggleFrame.Size = UDim2.new(1, -20, 0, 50)
+        ToggleFrame.Size = UDim2.new(1, -20, 0, 60)
         ToggleFrame.Position = position
         ToggleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
         ToggleFrame.BackgroundTransparency = 0.1
         ToggleFrame.Parent = ContentFrame
 
         local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(0.7, 0, 1, 0)
-        Label.Position = UDim2.new(0, 10, 0, 0)
+        Label.Size = UDim2.new(0.7, 0, 0.6, 0)
+        Label.Position = UDim2.new(0, 10, 0, 5)
         Label.BackgroundTransparency = 1
         Label.Text = name
         Label.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -265,8 +321,8 @@ local function CreateUI()
         Label.Parent = ToggleFrame
 
         local StatusLabel = Instance.new("TextLabel")
-        StatusLabel.Size = UDim2.new(0.7, 0, 0.5, 0)
-        StatusLabel.Position = UDim2.new(0, 10, 0.5, 0)
+        StatusLabel.Size = UDim2.new(0.7, 0, 0.4, 0)
+        StatusLabel.Position = UDim2.new(0, 10, 0.6, 0)
         StatusLabel.BackgroundTransparency = 1
         StatusLabel.Text = description
         StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
@@ -276,8 +332,8 @@ local function CreateUI()
         StatusLabel.Parent = ToggleFrame
 
         local ToggleButton = Instance.new("TextButton")
-        ToggleButton.Size = UDim2.new(0, 50, 0, 30)
-        ToggleButton.Position = UDim2.new(1, -60, 0.5, -15)
+        ToggleButton.Size = UDim2.new(0, 60, 0, 30)
+        ToggleButton.Position = UDim2.new(1, -70, 0.5, -15)
         ToggleButton.BackgroundColor3 = BlazixHub.Config[configKey] and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(80, 80, 80)
         ToggleButton.Text = BlazixHub.Config[configKey] and "ON" or "OFF"
         ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -290,45 +346,45 @@ local function CreateUI()
             ToggleButton.BackgroundColor3 = BlazixHub.Config[configKey] and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(80, 80, 80)
             ToggleButton.Text = BlazixHub.Config[configKey] and "ON" or "OFF"
             
-            -- Restart functions when toggled
-            if configKey == "Infinite Jump" then
-                EnableInfiniteJump()
+            -- Restart function when toggled
+            if configKey == "Fly" then
+                EnableFly()
+            elseif configKey == "God Mode" then
+                EnableGodMode()
             elseif configKey == "Speed Boost" then
                 EnableSpeedBoost()
+            elseif configKey == "Infinite Jump" then
+                EnableInfiniteJump()
+            elseif configKey == "Noclip" then
+                EnableNoclip()
             elseif configKey == "Auto Farm" then
                 if BlazixHub.Config[configKey] then
-                    spawn(AutoFarm)
-                end
-            elseif configKey == "Auto Plant" then
-                if BlazixHub.Config[configKey] then
-                    spawn(AutoPlant)
-                end
-            elseif configKey == "Auto Water" then
-                if BlazixHub.Config[configKey] then
-                    spawn(AutoWater)
+                    spawn(AutoFarmLuckyBlocks)
                 end
             end
         end)
     end
 
-    -- Add working toggles
-    CreateWorkingToggle("🌱 Auto Farm", "Automatically harvest plants", UDim2.new(0, 10, 0, 20), "Auto Farm")
-    CreateWorkingToggle("🪴 Auto Plant", "Plant seeds automatically", UDim2.new(0, 10, 0, 80), "Auto Plant")
-    CreateWorkingToggle("💧 Auto Water", "Water plants automatically", UDim2.new(0, 10, 0, 140), "Auto Water")
-    CreateWorkingToggle("🏆 Auto Claim", "Claim rewards automatically", UDim2.new(0, 10, 0, 200), "Auto Claim")
-    CreateWorkingToggle("🦘 Infinite Jump", "Jump infinitely", UDim2.new(0, 10, 0, 260), "Infinite Jump")
-    CreateWorkingToggle("⚡ Speed Boost", "Increase movement speed", UDim2.new(0, 10, 0, 320), "Speed Boost")
+    -- Add working toggles for Lucky Blocks
+    CreateWorkingToggle("🪽 Fly", "WASD + Space/Shift to fly", UDim2.new(0, 10, 0, 20), "Fly")
+    CreateWorkingToggle("🛡️ God Mode", "Become invincible", UDim2.new(0, 10, 0, 90), "God Mode")
+    CreateWorkingToggle("⚡ Speed Boost", "100% movement speed", UDim2.new(0, 10, 0, 160), "Speed Boost")
+    CreateWorkingToggle("🦘 Infinite Jump", "Jump infinitely", UDim2.new(0, 10, 0, 230), "Infinite Jump")
+    CreateWorkingToggle("👻 Noclip", "Walk through walls", UDim2.new(0, 10, 0, 300), "Noclip")
+    CreateWorkingToggle("🎯 Auto Farm", "Auto collect lucky blocks", UDim2.new(0, 10, 0, 370), "Auto Farm")
 
-    -- Status Label
-    local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Size = UDim2.new(1, -20, 0, 30)
-    StatusLabel.Position = UDim2.new(0, 10, 0, 380)
-    StatusLabel.BackgroundTransparency = 1
-    StatusLabel.Text = "✅ ALL SYSTEMS WORKING"
-    StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-    StatusLabel.Font = Enum.Font.GothamBold
-    StatusLabel.TextSize = 14
-    StatusLabel.Parent = ContentFrame
+    -- Controls Info
+    local ControlsLabel = Instance.new("TextLabel")
+    ControlsLabel.Size = UDim2.new(1, -20, 0, 60)
+    ControlsLabel.Position = UDim2.new(0, 10, 0, 440)
+    ControlsLabel.BackgroundTransparency = 1
+    ControlsLabel.Text = "🎮 CONTROLS:\nFly: WASD + Space/Shift\nAll features work instantly!"
+    ControlsLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+    ControlsLabel.Font = Enum.Font.Gotham
+    ControlsLabel.TextSize = 12
+    ControlsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ControlsLabel.TextWrapped = true
+    ControlsLabel.Parent = ContentFrame
 
     -- Button events
     OpenMenuBtn.MouseButton1Click:Connect(function()
@@ -358,11 +414,13 @@ end
 local UI = CreateUI()
 StartFunctions()
 
-print("🎮 BLAZIX HUB LOADED SUCCESSFULLY!")
-print("✅ Infinite Jump: WORKING")
-print("✅ Auto Farm: WORKING") 
-print("✅ Auto Plant: WORKING")
-print("✅ Auto Water: WORKING")
+print("🎮 BLAZIX HUB - LUCKY BLOCKS LOADED!")
+print("✅ Fly: W A S D + Space/Shift")
+print("✅ God Mode: Invincibility")
+print("✅ Speed Boost: 100% speed")
+print("✅ Infinite Jump: Unlimited jumps")
+print("✅ Noclip: Walk through walls")
+print("✅ Auto Farm: Collect lucky blocks")
 print("📍 Tap the BLAZIX button to open menu")
 
-warn("BLAZIX HUB IS NOW WORKING! Tap the blue button!")
+warn("BLAZIX HUB FOR LUCKY BLOCKS IS WORKING!")
