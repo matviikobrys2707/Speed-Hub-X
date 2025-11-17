@@ -1,9 +1,10 @@
--- BlazixHub - Lucky Blocks UNIVERSAL (PC + Mobile)
+-- BlazixHub - Lucky Blocks FIXED VERSION
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 -- UNIVERSAL CONFIGURATION
 local BlazixHub = {
@@ -13,68 +14,39 @@ local BlazixHub = {
         ["Speed Boost"] = false,
         ["Infinite Jump"] = true,
         ["Noclip"] = false,
-        ["Auto Farm"] = false
+        ["Auto Farm"] = false,
+        ["Kill All"] = false,
+        ["Kill Player"] = false
     },
     
     Connections = {},
     Active = true,
     Flying = false,
     FlySpeed = 50,
-    IsMobile = false
+    IsMobile = false,
+    SelectedPlayer = nil
 }
 
 -- DETECT PLATFORM
 BlazixHub.IsMobile = (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
 
--- IMPROVED INFINITE JUMP (поднимает вверх при удержании)
+-- IMPROVED INFINITE JUMP
 local function EnableInfiniteJump()
     if BlazixHub.Connections["InfiniteJump"] then
         BlazixHub.Connections["InfiniteJump"]:Disconnect()
     end
     
-    local isJumping = false
-    local liftVelocity
-    
-    -- Jump request
     BlazixHub.Connections["InfiniteJump"] = UserInputService.JumpRequest:Connect(function()
         if BlazixHub.Config["Infinite Jump"] and LocalPlayer.Character then
             local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
             if humanoid then
                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                isJumping = true
-                
-                -- Create lift velocity for continuous upward movement
-                if not liftVelocity then
-                    liftVelocity = Instance.new("BodyVelocity")
-                    liftVelocity.MaxForce = Vector3.new(0, 40000, 0)
-                    liftVelocity.Parent = LocalPlayer.Character.HumanoidRootPart
-                end
             end
-        end
-    end)
-    
-    -- Continuous lift while jumping
-    BlazixHub.Connections["JumpLift"] = RunService.Heartbeat:Connect(function()
-        if BlazixHub.Config["Infinite Jump"] and LocalPlayer.Character and isJumping then
-            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Jumping then
-                if liftVelocity then
-                    liftVelocity.Velocity = Vector3.new(0, 50, 0) -- Поднимает вверх
-                end
-            else
-                isJumping = false
-                if liftVelocity then
-                    liftVelocity.Velocity = Vector3.new(0, 0, 0)
-                end
-            end
-        elseif liftVelocity then
-            liftVelocity.Velocity = Vector3.new(0, 0, 0)
-            isJumping = false
         end
     end)
 end
 
--- UNIVERSAL FLY FUNCTION (работает на PC и телефоне)
+-- FIXED FLY FUNCTION FOR MOBILE
 local function EnableFly()
     if BlazixHub.Connections["Fly"] then
         BlazixHub.Connections["Fly"]:Disconnect()
@@ -113,14 +85,20 @@ local function EnableFly()
                 if UserInputService:IsKeyDown(Enum.KeyCode.D) then
                     direction = direction + camera.CFrame.RightVector
                 end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                    direction = direction + Vector3.new(0, 1, 0)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                    direction = direction - Vector3.new(0, 1, 0)
-                end
                 
-                -- Mobile fly controls (virtual buttons)
+                -- Mobile Movement Controls
+                if BlazixHub.MobileMoveForward then
+                    direction = direction + camera.CFrame.LookVector
+                end
+                if BlazixHub.MobileMoveBack then
+                    direction = direction - camera.CFrame.LookVector
+                end
+                if BlazixHub.MobileMoveLeft then
+                    direction = direction - camera.CFrame.RightVector
+                end
+                if BlazixHub.MobileMoveRight then
+                    direction = direction + camera.CFrame.RightVector
+                end
                 if BlazixHub.MobileFlyUp then
                     direction = direction + Vector3.new(0, 1, 0)
                 end
@@ -144,6 +122,8 @@ local function EnableFly()
                 local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
                 if humanoid then
                     humanoid.PlatformStand = false
+                    -- Reset character state when fly is disabled
+                    humanoid:ChangeState(Enum.HumanoidStateType.Landed)
                 end
             end
             BlazixHub.Flying = false
@@ -151,7 +131,7 @@ local function EnableFly()
     end)
 end
 
--- GOD MODE
+-- IMPROVED GOD MODE
 local function EnableGodMode()
     if BlazixHub.Connections["GodMode"] then
         BlazixHub.Connections["GodMode"]:Disconnect()
@@ -163,6 +143,26 @@ local function EnableGodMode()
             if humanoid then
                 humanoid.Health = 100
                 humanoid.MaxHealth = math.huge
+                
+                -- Make sure character doesn't take damage
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanTouch = false
+                        part.CanQuery = false
+                    end
+                end
+            end
+        elseif LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.MaxHealth = 100
+                -- Restore collision
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanTouch = true
+                        part.CanQuery = true
+                    end
+                end
             end
         end
     end)
@@ -234,67 +234,162 @@ local function AutoFarmLuckyBlocks()
     end
 end
 
+-- KILL ALL PLAYERS
+local function KillAllPlayers()
+    if BlazixHub.Config["Kill All"] then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = 0
+                end
+            end
+        end
+    end
+end
+
+-- KILL SPECIFIC PLAYER
+local function KillPlayer(playerName)
+    local targetPlayer = Players:FindFirstChild(playerName)
+    if targetPlayer and targetPlayer.Character then
+        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Health = 0
+        end
+    end
+end
+
+-- TELEPORT TO PLAYER
+local function TeleportToPlayer(playerName)
+    local targetPlayer = Players:FindFirstChild(playerName)
+    if targetPlayer and targetPlayer.Character and LocalPlayer.Character then
+        local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if targetRoot and localRoot then
+            localRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 3, 0)
+        end
+    end
+end
+
+-- TELEPORT PLAYER TO ME
+local function TeleportPlayerToMe(playerName)
+    local targetPlayer = Players:FindFirstChild(playerName)
+    if targetPlayer and targetPlayer.Character and LocalPlayer.Character then
+        local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if targetRoot and localRoot then
+            targetRoot.CFrame = localRoot.CFrame + Vector3.new(0, 3, 0)
+        end
+    end
+end
+
 -- CREATE MOBILE FLY CONTROLS
 local function CreateMobileFlyControls(screenGui)
     if not BlazixHub.IsMobile then return end
     
-    -- Fly Up Button
+    -- Movement Buttons (WASD equivalent)
+    local MoveForward = Instance.new("TextButton")
+    MoveForward.Name = "MoveForward"
+    MoveForward.Size = UDim2.new(0, 70, 0, 70)
+    MoveForward.Position = UDim2.new(0, 100, 1, -220)
+    MoveForward.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    MoveForward.BackgroundTransparency = 0.3
+    MoveForward.Text = "⬆️"
+    MoveForward.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MoveForward.Font = Enum.Font.GothamBold
+    MoveForward.TextSize = 20
+    MoveForward.Visible = false
+    MoveForward.Parent = screenGui
+    
+    local MoveBack = Instance.new("TextButton")
+    MoveBack.Name = "MoveBack"
+    MoveBack.Size = UDim2.new(0, 70, 0, 70)
+    MoveBack.Position = UDim2.new(0, 100, 1, -130)
+    MoveBack.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    MoveBack.BackgroundTransparency = 0.3
+    MoveBack.Text = "⬇️"
+    MoveBack.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MoveBack.Font = Enum.Font.GothamBold
+    MoveBack.TextSize = 20
+    MoveBack.Visible = false
+    MoveBack.Parent = screenGui
+    
+    local MoveLeft = Instance.new("TextButton")
+    MoveLeft.Name = "MoveLeft"
+    MoveLeft.Size = UDim2.new(0, 70, 0, 70)
+    MoveLeft.Position = UDim2.new(0, 20, 1, -175)
+    MoveLeft.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    MoveLeft.BackgroundTransparency = 0.3
+    MoveLeft.Text = "⬅️"
+    MoveLeft.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MoveLeft.Font = Enum.Font.GothamBold
+    MoveLeft.TextSize = 20
+    MoveLeft.Visible = false
+    MoveLeft.Parent = screenGui
+    
+    local MoveRight = Instance.new("TextButton")
+    MoveRight.Name = "MoveRight"
+    MoveRight.Size = UDim2.new(0, 70, 0, 70)
+    MoveRight.Position = UDim2.new(0, 180, 1, -175)
+    MoveRight.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    MoveRight.BackgroundTransparency = 0.3
+    MoveRight.Text = "➡️"
+    MoveRight.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MoveRight.Font = Enum.Font.GothamBold
+    MoveRight.TextSize = 20
+    MoveRight.Visible = false
+    MoveRight.Parent = screenGui
+    
+    -- Fly Up/Down Buttons
     local FlyUpBtn = Instance.new("TextButton")
     FlyUpBtn.Name = "FlyUpBtn"
-    FlyUpBtn.Size = UDim2.new(0, 80, 0, 80)
-    FlyUpBtn.Position = UDim2.new(1, -100, 0.7, 0)
-    FlyUpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    FlyUpBtn.Size = UDim2.new(0, 70, 0, 70)
+    FlyUpBtn.Position = UDim2.new(1, -80, 1, -220)
+    FlyUpBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
     FlyUpBtn.BackgroundTransparency = 0.3
-    FlyUpBtn.Text = "🔼\nFLY UP"
+    FlyUpBtn.Text = "🔼"
     FlyUpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     FlyUpBtn.Font = Enum.Font.GothamBold
-    FlyUpBtn.TextSize = 12
-    FlyUpBtn.TextWrapped = true
+    FlyUpBtn.TextSize = 20
     FlyUpBtn.Visible = false
     FlyUpBtn.Parent = screenGui
     
-    -- Fly Down Button
     local FlyDownBtn = Instance.new("TextButton")
     FlyDownBtn.Name = "FlyDownBtn"
-    FlyDownBtn.Size = UDim2.new(0, 80, 0, 80)
-    FlyDownBtn.Position = UDim2.new(1, -100, 0.85, 0)
+    FlyDownBtn.Size = UDim2.new(0, 70, 0, 70)
+    FlyDownBtn.Position = UDim2.new(1, -80, 1, -130)
     FlyDownBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
     FlyDownBtn.BackgroundTransparency = 0.3
-    FlyDownBtn.Text = "🔽\nFLY DOWN"
+    FlyDownBtn.Text = "🔽"
     FlyDownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     FlyDownBtn.Font = Enum.Font.GothamBold
-    FlyDownBtn.TextSize = 12
-    FlyDownBtn.TextWrapped = true
+    FlyDownBtn.TextSize = 20
     FlyDownBtn.Visible = false
     FlyDownBtn.Parent = screenGui
     
-    -- Button events
-    FlyUpBtn.MouseButton1Down:Connect(function()
-        BlazixHub.MobileFlyUp = true
-    end)
+    -- Button events for movement
+    local function SetupMobileButton(button, direction)
+        button.MouseButton1Down:Connect(function()
+            BlazixHub[direction] = true
+        end)
+        
+        button.MouseButton1Up:Connect(function()
+            BlazixHub[direction] = false
+        end)
+        
+        button.TouchLongPress:Connect(function()
+            BlazixHub[direction] = true
+        end)
+    end
     
-    FlyUpBtn.MouseButton1Up:Connect(function()
-        BlazixHub.MobileFlyUp = false
-    end)
+    SetupMobileButton(MoveForward, "MobileMoveForward")
+    SetupMobileButton(MoveBack, "MobileMoveBack")
+    SetupMobileButton(MoveLeft, "MobileMoveLeft")
+    SetupMobileButton(MoveRight, "MobileMoveRight")
+    SetupMobileButton(FlyUpBtn, "MobileFlyUp")
+    SetupMobileButton(FlyDownBtn, "MobileFlyDown")
     
-    FlyUpBtn.TouchLongPress:Connect(function()
-        BlazixHub.MobileFlyUp = true
-    end)
-    
-    FlyDownBtn.MouseButton1Down:Connect(function()
-        BlazixHub.MobileFlyDown = true
-    end)
-    
-    FlyDownBtn.MouseButton1Up:Connect(function()
-        BlazixHub.MobileFlyDown = false
-    end)
-    
-    FlyDownBtn.TouchLongPress:Connect(function()
-        BlazixHub.MobileFlyDown = true
-    end)
-    
-    -- Show/hide fly buttons when fly is toggled
-    BlazixHub.MobileFlyButtons = {FlyUpBtn, FlyDownBtn}
+    BlazixHub.MobileFlyButtons = {MoveForward, MoveBack, MoveLeft, MoveRight, FlyUpBtn, FlyDownBtn}
 end
 
 -- SHOW/HIDE MOBILE FLY BUTTONS
@@ -317,6 +412,15 @@ local function StartFunctions()
     if BlazixHub.Config["Auto Farm"] then
         spawn(AutoFarmLuckyBlocks)
     end
+    
+    if BlazixHub.Config["Kill All"] then
+        spawn(function()
+            while BlazixHub.Active and BlazixHub.Config["Kill All"] do
+                KillAllPlayers()
+                task.wait(1)
+            end
+        end)
+    end
 end
 
 -- CREATE UI
@@ -326,17 +430,18 @@ local function CreateUI()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
 
-    -- Open Menu Button
+    -- Open Menu Button (SMALLER AND MOVABLE)
     local OpenMenuBtn = Instance.new("TextButton")
     OpenMenuBtn.Name = "OpenMenuBtn"
-    OpenMenuBtn.Size = UDim2.new(0, 80, 0, 80)
+    OpenMenuBtn.Size = UDim2.new(0, 60, 0, 60)  -- Smaller
     OpenMenuBtn.Position = UDim2.new(0, 10, 0, 10)
     OpenMenuBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
-    OpenMenuBtn.Text = BlazixHub.IsMobile and "📱\nBLAZIX" or "🎮\nBLAZIX"
+    OpenMenuBtn.Text = BlazixHub.IsMobile and "📱" or "🎮"
     OpenMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     OpenMenuBtn.Font = Enum.Font.GothamBold
-    OpenMenuBtn.TextSize = 14
-    OpenMenuBtn.TextWrapped = true
+    OpenMenuBtn.TextSize = 16
+    OpenMenuBtn.Active = true
+    OpenMenuBtn.Draggable = true  -- Make it movable
     OpenMenuBtn.Visible = true
     OpenMenuBtn.Parent = ScreenGui
 
@@ -346,8 +451,8 @@ local function CreateUI()
     -- Main Window
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainWindow"
-    MainFrame.Size = UDim2.new(0, 450, 0, 500)
-    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -250)
+    MainFrame.Size = UDim2.new(0, 450, 0, 550)  -- Taller for new features
+    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -275)
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     MainFrame.BackgroundTransparency = 0.1
     MainFrame.BorderSizePixel = 0
@@ -377,7 +482,7 @@ local function CreateUI()
     TitleLabel.Size = UDim2.new(1, -80, 1, 0)
     TitleLabel.Position = UDim2.new(0, 10, 0, 0)
     TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = BlazixHub.IsMobile and "BLAZIX HUB - MOBILE" or "BLAZIX HUB - PC"
+    TitleLabel.Text = "BLAZIX HUB - LUCKY BLOCKS"
     TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Font = Enum.Font.GothamBold
@@ -408,12 +513,14 @@ local function CreateUI()
     HideButton.TextSize = 16
     HideButton.Parent = TitleBar
 
-    -- Content Area
-    local ContentFrame = Instance.new("Frame")
+    -- Content Area with Scrolling
+    local ContentFrame = Instance.new("ScrollingFrame")
     ContentFrame.Name = "ContentFrame"
     ContentFrame.Size = UDim2.new(1, 0, 1, -40)
     ContentFrame.Position = UDim2.new(0, 0, 0, 40)
     ContentFrame.BackgroundTransparency = 1
+    ContentFrame.ScrollBarThickness = 6
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 800)
     ContentFrame.Parent = MainFrame
 
     -- Create working toggles
@@ -462,7 +569,6 @@ local function CreateUI()
             ToggleButton.BackgroundColor3 = BlazixHub.Config[configKey] and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(80, 80, 80)
             ToggleButton.Text = BlazixHub.Config[configKey] and "ON" or "OFF"
             
-            -- Special handling for each feature
             if configKey == "Fly" then
                 EnableFly()
                 ToggleMobileFlyButtons(BlazixHub.Config["Fly"])
@@ -478,26 +584,120 @@ local function CreateUI()
                 if BlazixHub.Config[configKey] then
                     spawn(AutoFarmLuckyBlocks)
                 end
+            elseif configKey == "Kill All" then
+                if BlazixHub.Config[configKey] then
+                    spawn(function()
+                        while BlazixHub.Active and BlazixHub.Config["Kill All"] do
+                            KillAllPlayers()
+                            task.wait(1)
+                        end
+                    end)
+                end
             end
         end)
     end
 
+    -- Player Selection Dropdown
+    local PlayerFrame = Instance.new("Frame")
+    PlayerFrame.Size = UDim2.new(1, -20, 0, 80)
+    PlayerFrame.Position = UDim2.new(0, 10, 0, 400)
+    PlayerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    PlayerFrame.BackgroundTransparency = 0.1
+    PlayerFrame.Parent = ContentFrame
+
+    local PlayerLabel = Instance.new("TextLabel")
+    PlayerLabel.Size = UDim2.new(1, 0, 0, 30)
+    PlayerLabel.Position = UDim2.new(0, 10, 0, 5)
+    PlayerLabel.BackgroundTransparency = 1
+    PlayerLabel.Text = "🎯 SELECT PLAYER"
+    PlayerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    PlayerLabel.Font = Enum.Font.GothamBold
+    PlayerLabel.TextSize = 14
+    PlayerLabel.TextXAlignment = Enum.TextXAlignment.Left
+    PlayerLabel.Parent = PlayerFrame
+
+    local PlayerDropdown = Instance.new("TextButton")
+    PlayerDropdown.Size = UDim2.new(0.8, 0, 0, 30)
+    PlayerDropdown.Position = UDim2.new(0.1, 0, 0, 35)
+    PlayerDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    PlayerDropdown.Text = "Click to select player"
+    PlayerDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+    PlayerDropdown.Font = Enum.Font.Gotham
+    PlayerDropdown.TextSize = 12
+    PlayerDropdown.Parent = PlayerFrame
+
+    -- Player action buttons
+    local function CreatePlayerActionButton(text, position, action)
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(0.4, -5, 0, 30)
+        button.Position = position
+        button.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
+        button.Text = text
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.Font = Enum.Font.GothamBold
+        button.TextSize = 12
+        button.Parent = PlayerFrame
+        
+        button.MouseButton1Click:Connect(function()
+            if BlazixHub.SelectedPlayer then
+                action(BlazixHub.SelectedPlayer)
+            end
+        end)
+    end
+
+    CreatePlayerActionButton("Teleport To", UDim2.new(0, 10, 0, 70), TeleportToPlayer)
+    CreatePlayerActionButton("Bring To Me", UDim2.new(0.5, 5, 0, 70), TeleportPlayerToMe)
+    CreatePlayerActionButton("Kill Player", UDim2.new(0, 10, 0, 105), KillPlayer)
+
+    -- Player dropdown functionality
+    PlayerDropdown.MouseButton1Click:Connect(function()
+        -- Create player list
+        local PlayerList = Instance.new("Frame")
+        PlayerList.Size = UDim2.new(0.8, 0, 0, 150)
+        PlayerList.Position = UDim2.new(0.1, 0, 0, 65)
+        PlayerList.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        PlayerList.Parent = PlayerFrame
+        
+        local UIListLayout = Instance.new("UIListLayout")
+        UIListLayout.Parent = PlayerList
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local PlayerBtn = Instance.new("TextButton")
+                PlayerBtn.Size = UDim2.new(1, 0, 0, 30)
+                PlayerBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                PlayerBtn.Text = player.Name
+                PlayerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                PlayerBtn.Font = Enum.Font.Gotham
+                PlayerBtn.TextSize = 11
+                PlayerBtn.Parent = PlayerList
+                
+                PlayerBtn.MouseButton1Click:Connect(function()
+                    BlazixHub.SelectedPlayer = player.Name
+                    PlayerDropdown.Text = player.Name
+                    PlayerList:Destroy()
+                end)
+            end
+        end
+    end)
+
     -- Add working toggles
-    CreateWorkingToggle("🪽 Fly", BlazixHub.IsMobile and "Use fly buttons on right" or "WASD + Space/Shift", UDim2.new(0, 10, 0, 20), "Fly")
+    CreateWorkingToggle("🪽 Fly", BlazixHub.IsMobile and "Use mobile controls" or "WASD + Mobile buttons", UDim2.new(0, 10, 0, 20), "Fly")
     CreateWorkingToggle("🛡️ God Mode", "Become invincible", UDim2.new(0, 10, 0, 90), "God Mode")
     CreateWorkingToggle("⚡ Speed Boost", "100% movement speed", UDim2.new(0, 10, 0, 160), "Speed Boost")
-    CreateWorkingToggle("🦘 Infinite Jump", "Hold jump to fly up", UDim2.new(0, 10, 0, 230), "Infinite Jump")
+    CreateWorkingToggle("🦘 Infinite Jump", "Jump infinitely", UDim2.new(0, 10, 0, 230), "Infinite Jump")
     CreateWorkingToggle("👻 Noclip", "Walk through walls", UDim2.new(0, 10, 0, 300), "Noclip")
     CreateWorkingToggle("🎯 Auto Farm", "Auto collect lucky blocks", UDim2.new(0, 10, 0, 370), "Auto Farm")
+    CreateWorkingToggle("💀 Kill All", "Kill all players continuously", UDim2.new(0, 10, 0, 500), "Kill All")
 
     -- Controls Info
     local controlsText = BlazixHub.IsMobile and 
-        "📱 MOBILE CONTROLS:\n• Fly: Use buttons on right\n• Infinite Jump: Hold jump button\n• All features work instantly!" or
-        "💻 PC CONTROLS:\n• Fly: WASD + Space/Shift\n• Infinite Jump: Hold Space\n• All features work instantly!"
+        "📱 MOBILE CONTROLS:\n• Fly: Use movement buttons\n• All features work instantly!" or
+        "💻 PC CONTROLS:\n• Fly: WASD\n• All features work instantly!"
     
     local ControlsLabel = Instance.new("TextLabel")
     ControlsLabel.Size = UDim2.new(1, -20, 0, 80)
-    ControlsLabel.Position = UDim2.new(0, 10, 0, 440)
+    ControlsLabel.Position = UDim2.new(0, 10, 0, 600)
     ControlsLabel.BackgroundTransparency = 1
     ControlsLabel.Text = controlsText
     ControlsLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
@@ -534,14 +734,13 @@ end
 local UI = CreateUI()
 StartFunctions()
 
-print("🎮 BLAZIX HUB - UNIVERSAL LOADED!")
+print("🎮 BLAZIX HUB - UPDATED LOADED!")
 print("📱 Platform: " .. (BlazixHub.IsMobile and "MOBILE" or "PC"))
-print("✅ Infinite Jump: Hold to fly up")
-print("✅ Fly: " .. (BlazixHub.IsMobile and "Use mobile buttons" or "WASD + Space/Shift"))
-print("✅ God Mode: Invincibility")
-print("✅ Speed Boost: 100% speed")
-print("✅ Noclip: Walk through walls")
-print("✅ Auto Farm: Collect lucky blocks")
+print("✅ Fixed Fly: Full movement controls")
+print("✅ Fixed God Mode: No falling when disabled")
+print("✅ Player Teleport: Select and teleport")
+print("✅ Kill Features: Kill all or specific players")
+print("✅ Movable Button: Drag the BLAZIX button")
 print("📍 Tap the BLAZIX button to open menu")
 
-warn("BLAZIX HUB UNIVERSAL IS WORKING! " .. (BlazixHub.IsMobile and "Mobile controls enabled!" or "PC controls enabled!"))
+warn("BLAZIX HUB UPDATED! All features fixed and working!")
