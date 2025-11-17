@@ -1,4 +1,4 @@
--- BlazixHub - FIXED CLOSE/HIDE BUTTONS VERSION
+-- BlazixHub - FIXED SCROLL WITH STATIC BUTTONS
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -44,7 +44,7 @@ local function EnableInfiniteJump()
     end)
 end
 
--- FIXED FLY FUNCTION FOR MOBILE
+-- SIMPLIFIED FLY FUNCTION (NO MOBILE BUTTONS)
 local function EnableFly()
     if BlazixHub.Connections["Fly"] then
         BlazixHub.Connections["Fly"]:Disconnect()
@@ -70,7 +70,7 @@ local function EnableFly()
                 local camera = workspace.CurrentCamera
                 local direction = Vector3.new()
                 
-                -- PC Controls
+                -- PC Controls Only (No mobile buttons)
                 if UserInputService:IsKeyDown(Enum.KeyCode.W) then
                     direction = direction + camera.CFrame.LookVector
                 end
@@ -87,26 +87,6 @@ local function EnableFly()
                     direction = direction + Vector3.new(0, 1, 0)
                 end
                 if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                    direction = direction - Vector3.new(0, 1, 0)
-                end
-                
-                -- Mobile Movement Controls
-                if BlazixHub.MobileMoveForward then
-                    direction = direction + camera.CFrame.LookVector
-                end
-                if BlazixHub.MobileMoveBack then
-                    direction = direction - camera.CFrame.LookVector
-                end
-                if BlazixHub.MobileMoveLeft then
-                    direction = direction - camera.CFrame.RightVector
-                end
-                if BlazixHub.MobileMoveRight then
-                    direction = direction + camera.CFrame.RightVector
-                end
-                if BlazixHub.MobileFlyUp then
-                    direction = direction + Vector3.new(0, 1, 0)
-                end
-                if BlazixHub.MobileFlyDown then
                     direction = direction - Vector3.new(0, 1, 0)
                 end
                 
@@ -285,124 +265,6 @@ local function TeleportPlayerToMe(playerName)
     end
 end
 
--- CREATE MOBILE FLY CONTROLS
-local function CreateMobileFlyControls(screenGui)
-    if not BlazixHub.IsMobile then return end
-    
-    -- Movement Buttons
-    local MoveForward = Instance.new("TextButton")
-    MoveForward.Name = "MoveForward"
-    MoveForward.Size = UDim2.new(0, 70, 0, 70)
-    MoveForward.Position = UDim2.new(0, 100, 1, -220)
-    MoveForward.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    MoveForward.BackgroundTransparency = 0.3
-    MoveForward.Text = "⬆️"
-    MoveForward.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MoveForward.Font = Enum.Font.GothamBold
-    MoveForward.TextSize = 20
-    MoveForward.Visible = false
-    MoveForward.Parent = screenGui
-    
-    local MoveBack = Instance.new("TextButton")
-    MoveBack.Name = "MoveBack"
-    MoveBack.Size = UDim2.new(0, 70, 0, 70)
-    MoveBack.Position = UDim2.new(0, 100, 1, -130)
-    MoveBack.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    MoveBack.BackgroundTransparency = 0.3
-    MoveBack.Text = "⬇️"
-    MoveBack.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MoveBack.Font = Enum.Font.GothamBold
-    MoveBack.TextSize = 20
-    MoveBack.Visible = false
-    MoveBack.Parent = screenGui
-    
-    local MoveLeft = Instance.new("TextButton")
-    MoveLeft.Name = "MoveLeft"
-    MoveLeft.Size = UDim2.new(0, 70, 0, 70)
-    MoveLeft.Position = UDim2.new(0, 20, 1, -175)
-    MoveLeft.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    MoveLeft.BackgroundTransparency = 0.3
-    MoveLeft.Text = "⬅️"
-    MoveLeft.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MoveLeft.Font = Enum.Font.GothamBold
-    MoveLeft.TextSize = 20
-    MoveLeft.Visible = false
-    MoveLeft.Parent = screenGui
-    
-    local MoveRight = Instance.new("TextButton")
-    MoveRight.Name = "MoveRight"
-    MoveRight.Size = UDim2.new(0, 70, 0, 70)
-    MoveRight.Position = UDim2.new(0, 180, 1, -175)
-    MoveRight.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    MoveRight.BackgroundTransparency = 0.3
-    MoveRight.Text = "➡️"
-    MoveRight.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MoveRight.Font = Enum.Font.GothamBold
-    MoveRight.TextSize = 20
-    MoveRight.Visible = false
-    MoveRight.Parent = screenGui
-    
-    -- Fly Up/Down Buttons
-    local FlyUpBtn = Instance.new("TextButton")
-    FlyUpBtn.Name = "FlyUpBtn"
-    FlyUpBtn.Size = UDim2.new(0, 70, 0, 70)
-    FlyUpBtn.Position = UDim2.new(1, -80, 1, -220)
-    FlyUpBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-    FlyUpBtn.BackgroundTransparency = 0.3
-    FlyUpBtn.Text = "🔼"
-    FlyUpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    FlyUpBtn.Font = Enum.Font.GothamBold
-    FlyUpBtn.TextSize = 20
-    FlyUpBtn.Visible = false
-    FlyUpBtn.Parent = screenGui
-    
-    local FlyDownBtn = Instance.new("TextButton")
-    FlyDownBtn.Name = "FlyDownBtn"
-    FlyDownBtn.Size = UDim2.new(0, 70, 0, 70)
-    FlyDownBtn.Position = UDim2.new(1, -80, 1, -130)
-    FlyDownBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 0)
-    FlyDownBtn.BackgroundTransparency = 0.3
-    FlyDownBtn.Text = "🔽"
-    FlyDownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    FlyDownBtn.Font = Enum.Font.GothamBold
-    FlyDownBtn.TextSize = 20
-    FlyDownBtn.Visible = false
-    FlyDownBtn.Parent = screenGui
-    
-    -- Button events for movement
-    local function SetupMobileButton(button, direction)
-        button.MouseButton1Down:Connect(function()
-            BlazixHub[direction] = true
-        end)
-        
-        button.MouseButton1Up:Connect(function()
-            BlazixHub[direction] = false
-        end)
-        
-        button.TouchLongPress:Connect(function()
-            BlazixHub[direction] = true
-        end)
-    end
-    
-    SetupMobileButton(MoveForward, "MobileMoveForward")
-    SetupMobileButton(MoveBack, "MobileMoveBack")
-    SetupMobileButton(MoveLeft, "MobileMoveLeft")
-    SetupMobileButton(MoveRight, "MobileMoveRight")
-    SetupMobileButton(FlyUpBtn, "MobileFlyUp")
-    SetupMobileButton(FlyDownBtn, "MobileFlyDown")
-    
-    BlazixHub.MobileFlyButtons = {MoveForward, MoveBack, MoveLeft, MoveRight, FlyUpBtn, FlyDownBtn}
-end
-
--- SHOW/HIDE MOBILE FLY BUTTONS
-local function ToggleMobileFlyButtons(visible)
-    if BlazixHub.MobileFlyButtons then
-        for _, button in pairs(BlazixHub.MobileFlyButtons) do
-            button.Visible = visible
-        end
-    end
-end
-
 -- START ALL FUNCTIONS
 local function StartFunctions()
     EnableInfiniteJump()
@@ -425,7 +287,7 @@ local function StartFunctions()
     end
 end
 
--- CREATE UI WITH FIXED CLOSE/HIDE BUTTONS
+-- CREATE UI WITH FIXED HEADER AND SCROLLING CONTENT
 local function CreateUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "BlazixHub"
@@ -447,13 +309,10 @@ local function CreateUI()
     OpenMenuBtn.Visible = true
     OpenMenuBtn.Parent = ScreenGui
 
-    -- Create mobile fly controls
-    CreateMobileFlyControls(ScreenGui)
-
-    -- Main Window - FIXED: No scrolling, fixed size
+    -- Main Window
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainWindow"
-    MainFrame.Size = UDim2.new(0, 450, 0, 500)  -- Fixed height, no scroll
+    MainFrame.Size = UDim2.new(0, 450, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -225, 0.5, -250)
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     MainFrame.BackgroundTransparency = 0.1
@@ -469,16 +328,16 @@ local function CreateUI()
     Stroke.Thickness = 2
     Stroke.Parent = MainFrame
 
-    -- Title Bar - FIXED: Always visible at top
-    local TitleBar = Instance.new("Frame")
-    TitleBar.Name = "TitleBar"
-    TitleBar.Size = UDim2.new(1, 0, 0, 40)
-    TitleBar.Position = UDim2.new(0, 0, 0, 0)  -- Fixed at top
-    TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    TitleBar.BackgroundTransparency = 0.1
-    TitleBar.BorderSizePixel = 0
-    TitleBar.ZIndex = 10  -- Higher z-index to stay on top
-    TitleBar.Parent = MainFrame
+    -- STATIC HEADER (Always visible, doesn't scroll)
+    local HeaderFrame = Instance.new("Frame")
+    HeaderFrame.Name = "HeaderFrame"
+    HeaderFrame.Size = UDim2.new(1, 0, 0, 40)
+    HeaderFrame.Position = UDim2.new(0, 0, 0, 0)
+    HeaderFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    HeaderFrame.BackgroundTransparency = 0.1
+    HeaderFrame.BorderSizePixel = 0
+    HeaderFrame.ZIndex = 10
+    HeaderFrame.Parent = MainFrame
 
     -- Title Label
     local TitleLabel = Instance.new("TextLabel")
@@ -492,9 +351,9 @@ local function CreateUI()
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 16
     TitleLabel.ZIndex = 11
-    TitleLabel.Parent = TitleBar
+    TitleLabel.Parent = HeaderFrame
 
-    -- Close Button - FIXED: Always visible in title bar
+    -- Close Button (STATIC - always visible)
     local CloseButton = Instance.new("TextButton")
     CloseButton.Name = "CloseButton"
     CloseButton.Size = UDim2.new(0, 35, 0, 35)
@@ -504,10 +363,10 @@ local function CreateUI()
     CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.TextSize = 16
-    CloseButton.ZIndex = 11  -- Higher z-index
-    CloseButton.Parent = TitleBar
+    CloseButton.ZIndex = 11
+    CloseButton.Parent = HeaderFrame
 
-    -- Hide Button - FIXED: Always visible in title bar
+    -- Hide Button (STATIC - always visible)
     local HideButton = Instance.new("TextButton")
     HideButton.Name = "HideButton"
     HideButton.Size = UDim2.new(0, 35, 0, 35)
@@ -517,19 +376,20 @@ local function CreateUI()
     HideButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     HideButton.Font = Enum.Font.GothamBold
     HideButton.TextSize = 16
-    HideButton.ZIndex = 11  -- Higher z-index
-    HideButton.Parent = TitleBar
+    HideButton.ZIndex = 11
+    HideButton.Parent = HeaderFrame
 
-    -- Content Area - FIXED: No scrolling, fixed position
-    local ContentFrame = Instance.new("Frame")
+    -- SCROLLING CONTENT AREA (Below header)
+    local ContentFrame = Instance.new("ScrollingFrame")
     ContentFrame.Name = "ContentFrame"
-    ContentFrame.Size = UDim2.new(1, 0, 1, -40)  -- Account for title bar
-    ContentFrame.Position = UDim2.new(0, 0, 0, 40)  -- Below title bar
+    ContentFrame.Size = UDim2.new(1, 0, 1, -40)  -- Account for header
+    ContentFrame.Position = UDim2.new(0, 0, 0, 40)  -- Below header
     ContentFrame.BackgroundTransparency = 1
-    ContentFrame.ClipsDescendants = true  -- Clip content that goes outside
+    ContentFrame.ScrollBarThickness = 6
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 800)  -- Scrollable content
     ContentFrame.Parent = MainFrame
 
-    -- Create working toggles with adjusted positions
+    -- Create working toggles
     local function CreateWorkingToggle(name, description, position, configKey)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(1, -20, 0, 60)
@@ -577,7 +437,7 @@ local function CreateUI()
             
             if configKey == "Fly" then
                 EnableFly()
-                ToggleMobileFlyButtons(BlazixHub.Config["Fly"])
+                -- NO MOBILE BUTTONS - Only standard movement
             elseif configKey == "God Mode" then
                 EnableGodMode()
             elseif configKey == "Speed Boost" then
@@ -603,8 +463,8 @@ local function CreateUI()
         end)
     end
 
-    -- Add working toggles with compact spacing
-    CreateWorkingToggle("🪽 Fly", BlazixHub.IsMobile and "Use mobile controls" or "WASD + Space/Shift", UDim2.new(0, 10, 0, 10), "Fly")
+    -- Add working toggles
+    CreateWorkingToggle("🪽 Fly", "WASD + Space/Shift to fly", UDim2.new(0, 10, 0, 10), "Fly")
     CreateWorkingToggle("🛡️ God Mode", "Become invincible", UDim2.new(0, 10, 0, 80), "God Mode")
     CreateWorkingToggle("⚡ Speed Boost", "100% movement speed", UDim2.new(0, 10, 0, 150), "Speed Boost")
     CreateWorkingToggle("🦘 Infinite Jump", "Jump infinitely", UDim2.new(0, 10, 0, 220), "Infinite Jump")
@@ -612,45 +472,45 @@ local function CreateUI()
     CreateWorkingToggle("🎯 Auto Farm", "Auto collect lucky blocks", UDim2.new(0, 10, 0, 360), "Auto Farm")
     CreateWorkingToggle("💀 Kill All", "Kill all players", UDim2.new(0, 10, 0, 430), "Kill All")
 
-    -- Player Selection Section (Compact)
+    -- Player Selection Section
     local PlayerFrame = Instance.new("Frame")
-    PlayerFrame.Size = UDim2.new(1, -20, 0, 120)
-    PlayerFrame.Position = UDim2.new(0, 10, 0, 500)
+    PlayerFrame.Size = UDim2.new(1, -20, 0, 150)
+    PlayerFrame.Position = UDim2.new(0, 10, 0, 510)
     PlayerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     PlayerFrame.BackgroundTransparency = 0.1
     PlayerFrame.Parent = ContentFrame
 
     local PlayerLabel = Instance.new("TextLabel")
-    PlayerLabel.Size = UDim2.new(1, 0, 0, 25)
+    PlayerLabel.Size = UDim2.new(1, 0, 0, 30)
     PlayerLabel.Position = UDim2.new(0, 10, 0, 5)
     PlayerLabel.BackgroundTransparency = 1
     PlayerLabel.Text = "🎯 PLAYER TELEPORT"
     PlayerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     PlayerLabel.Font = Enum.Font.GothamBold
-    PlayerLabel.TextSize = 12
+    PlayerLabel.TextSize = 14
     PlayerLabel.TextXAlignment = Enum.TextXAlignment.Left
     PlayerLabel.Parent = PlayerFrame
 
     local PlayerDropdown = Instance.new("TextButton")
-    PlayerDropdown.Size = UDim2.new(0.8, 0, 0, 25)
-    PlayerDropdown.Position = UDim2.new(0.1, 0, 0, 30)
+    PlayerDropdown.Size = UDim2.new(0.8, 0, 0, 30)
+    PlayerDropdown.Position = UDim2.new(0.1, 0, 0, 35)
     PlayerDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     PlayerDropdown.Text = "Click to select player"
     PlayerDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
     PlayerDropdown.Font = Enum.Font.Gotham
-    PlayerDropdown.TextSize = 11
+    PlayerDropdown.TextSize = 12
     PlayerDropdown.Parent = PlayerFrame
 
-    -- Compact player action buttons
+    -- Player action buttons
     local function CreatePlayerActionButton(text, position, action, color)
         local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0.3, -5, 0, 25)
+        button.Size = UDim2.new(0.4, -5, 0, 30)
         button.Position = position
         button.BackgroundColor3 = color or Color3.fromRGB(0, 100, 255)
         button.Text = text
         button.TextColor3 = Color3.fromRGB(255, 255, 255)
         button.Font = Enum.Font.GothamBold
-        button.TextSize = 10
+        button.TextSize = 12
         button.Parent = PlayerFrame
         
         button.MouseButton1Click:Connect(function()
@@ -660,9 +520,9 @@ local function CreateUI()
         end)
     end
 
-    CreatePlayerActionButton("TP To", UDim2.new(0, 10, 0, 65), TeleportToPlayer, Color3.fromRGB(0, 100, 255))
-    CreatePlayerActionButton("Bring", UDim2.new(0.35, 5, 0, 65), TeleportPlayerToMe, Color3.fromRGB(0, 150, 100))
-    CreatePlayerActionButton("Kill", UDim2.new(0.7, 0, 0, 65), KillPlayer, Color3.fromRGB(255, 50, 50))
+    CreatePlayerActionButton("Teleport To", UDim2.new(0, 10, 0, 75), TeleportToPlayer, Color3.fromRGB(0, 100, 255))
+    CreatePlayerActionButton("Bring To Me", UDim2.new(0.5, 5, 0, 75), TeleportPlayerToMe, Color3.fromRGB(0, 150, 100))
+    CreatePlayerActionButton("Kill Player", UDim2.new(0, 10, 0, 110), KillPlayer, Color3.fromRGB(255, 50, 50))
 
     -- Player dropdown functionality
     local dropdownOpen = false
@@ -670,10 +530,9 @@ local function CreateUI()
         if dropdownOpen then return end
         dropdownOpen = true
         
-        -- Create player list
         local PlayerList = Instance.new("Frame")
         PlayerList.Size = UDim2.new(0.8, 0, 0, 120)
-        PlayerList.Position = UDim2.new(0.1, 0, 0, 55)
+        PlayerList.Position = UDim2.new(0.1, 0, 0, 65)
         PlayerList.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         PlayerList.ZIndex = 20
         PlayerList.Parent = PlayerFrame
@@ -701,18 +560,22 @@ local function CreateUI()
                 end)
             end
         end
-        
-        -- Close dropdown when clicking outside
-        local function closeDropdown()
-            if PlayerList and PlayerList.Parent then
-                PlayerList:Destroy()
-                dropdownOpen = false
-            end
-        end
-        
-        task.wait(0.1)
-        PlayerList.MouseLeave:Connect(closeDropdown)
     end)
+
+    -- Controls Info
+    local controlsText = "💻 FLY CONTROLS:\n• W A S D - Movement\n• Space - Fly Up\n• Shift - Fly Down\n• All features work instantly!"
+    
+    local ControlsLabel = Instance.new("TextLabel")
+    ControlsLabel.Size = UDim2.new(1, -20, 0, 80)
+    ControlsLabel.Position = UDim2.new(0, 10, 0, 670)
+    ControlsLabel.BackgroundTransparency = 1
+    ControlsLabel.Text = controlsText
+    ControlsLabel.TextColor3 = Color3.fromRGB(0, 255, 255)
+    ControlsLabel.Font = Enum.Font.Gotham
+    ControlsLabel.TextSize = 12
+    ControlsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ControlsLabel.TextWrapped = true
+    ControlsLabel.Parent = ContentFrame
 
     -- Button events
     OpenMenuBtn.MouseButton1Click:Connect(function()
@@ -741,11 +604,12 @@ end
 local UI = CreateUI()
 StartFunctions()
 
-print("🎮 BLAZIX HUB - FIXED CLOSE/HIDE BUTTONS!")
-print("✅ Close/Hide buttons always visible")
-print("✅ No scrolling - all content fits")
-print("✅ Perfect layout with no overlaps")
+print("🎮 BLAZIX HUB - FIXED SCROLL WITH STATIC HEADER!")
+print("✅ Static header with Close/Hide buttons")
+print("✅ Scrollable content area")
+print("✅ No mobile fly buttons - only standard controls")
+print("✅ Fly: WASD + Space/Shift")
 print("✅ All features working perfectly!")
 print("📍 Tap the BLAZIX button to open menu")
 
-warn("CLOSE/HIDE BUTTONS FIXED! They stay visible always!")
+warn("PERFECT VERSION! Static buttons + Scroll + No mobile fly clutter!")
