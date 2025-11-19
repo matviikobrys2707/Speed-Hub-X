@@ -711,6 +711,15 @@ local function CreateUltimateUI()
         end
     end
 
+    -- Content Frame - ДОЛЖЕН БЫТЬ ОБЪЯВЛЕН ЗАРАНЕЕ
+    local ContentFrame = Instance.new("ScrollingFrame")
+    ContentFrame.Size = UDim2.new(1, -20, 1, -120)
+    ContentFrame.Position = UDim2.new(0, 10, 0, 110)
+    ContentFrame.BackgroundTransparency = 1
+    ContentFrame.ScrollBarThickness = 4
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ContentFrame.Parent = MainFrame
+
     -- Create tabs with proper positioning
     for i, tabName in ipairs(Tabs) do
         local TabButton = Instance.new("TextButton")
@@ -735,15 +744,6 @@ local function CreateUltimateUI()
         
         table.insert(TabButtons, TabButton)
     end
-
-    -- Content Frame
-    local ContentFrame = Instance.new("ScrollingFrame")
-    ContentFrame.Size = UDim2.new(1, -20, 1, -120)
-    ContentFrame.Position = UDim2.new(0, 10, 0, 110)
-    ContentFrame.BackgroundTransparency = 1
-    ContentFrame.ScrollBarThickness = 4
-    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    ContentFrame.Parent = MainFrame
 
     -- Player Selection Frame
     local PlayerFrame = Instance.new("Frame")
@@ -894,12 +894,10 @@ local function CreateUltimateUI()
         return ButtonFrame
     end
 
-    -- Update Tab Content - COMPLETELY FIXED
+    -- Update Tab Content - ПОЛНОСТЬЮ ИСПРАВЛЕНА
     local function UpdateTabContent()
-        -- COMPLETELY CLEAR CONTENT - FIXED
-        local children = ContentFrame:GetChildren()
-        for i = #children, 1, -1 do
-            local child = children[i]
+        -- ПОЛНОСТЬЮ ОЧИСТИТЬ СОДЕРЖИМОЕ
+        for _, child in pairs(ContentFrame:GetChildren()) do
             if child:IsA("Frame") then
                 child:Destroy()
             end
