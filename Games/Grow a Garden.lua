@@ -623,7 +623,7 @@ local function CreateUltimateUI()
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = CoreGui
 
-    -- Open Button
+    -- Open Button (MOVABLE)
     local OpenButton = Instance.new("TextButton")
     OpenButton.Name = "OpenButton"
     OpenButton.Size = UDim2.new(0, 60, 0, 60)
@@ -640,7 +640,7 @@ local function CreateUltimateUI()
     OpenButtonCorner.CornerRadius = UDim.new(0.2, 0)
     OpenButtonCorner.Parent = OpenButton
 
-    -- WIDE Main Window
+    -- WIDE Main Window (MOVABLE)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 600, 0, 500)  -- Wider window
@@ -703,6 +703,7 @@ local function CreateUltimateUI()
 
     -- Tab Buttons
     local Tabs = {"Visuals", "Combat", "Movement", "Player", "Weapon", "Server", "Trolling"}
+    local TabButtons = {}
     
     local function CreateTabButton(name, position)
         local TabButton = Instance.new("TextButton")
@@ -723,13 +724,12 @@ local function CreateUltimateUI()
             BlazixHub.CurrentTab = name
             UpdateTabContent()
             -- Update all tab colors
-            for _, child in ipairs(TabContainer:GetChildren()) do
-                if child:IsA("TextButton") then
-                    child.BackgroundColor3 = child.Text == name and Colors.Accent or Colors.Secondary
-                end
+            for _, btn in pairs(TabButtons) do
+                btn.BackgroundColor3 = btn.Text == name and Colors.Accent or Colors.Secondary
             end
         end)
         
+        table.insert(TabButtons, TabButton)
         return TabButton
     end
 
@@ -906,7 +906,6 @@ local function CreateUltimateUI()
         end
 
         local yOffset = 5
-        local xOffset = 0
         
         if BlazixHub.CurrentTab == "Visuals" then
             -- Visuals Tab
@@ -1132,31 +1131,46 @@ local function CreateUltimateUI()
         OpenButton.Visible = true
     end)
 
-    -- Dragging
-    local dragging, dragInput, dragStart, startPos
-    local function update(input)
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    -- DRAGGING FUNCTION FOR BOTH OPEN BUTTON AND MAIN FRAME
+    local function MakeDraggable(gui)
+        local dragging = false
+        local dragInput, dragStart, startPos
+
+        local function update(input)
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+
+        gui.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = input.Position
+                startPos = gui.Position
+
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
+
+        gui.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                update(input)
+            end
+        end)
     end
 
-    Header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-
-    Header.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then update(input) end
-    end)
+    -- Apply dragging to both OpenButton and MainFrame
+    MakeDraggable(OpenButton)
+    MakeDraggable(MainFrame)
 
     return ScreenGui
 end
@@ -1166,10 +1180,12 @@ local success, err = pcall(function()
     local UI = CreateUltimateUI()
     print("🔥 BLAZIX ULTIMATE LOADED!")
     print("✅ 50+ FEATURES AVAILABLE")
-    print("✅ 7 TABS SYSTEM")
+    print("✅ 7 TABS SYSTEM - WORKING")
     print("✅ WIDE MENU DESIGN")
+    print("✅ MOVABLE OPEN BUTTON AND MENU")
     print("✅ PISTOL SHOOT FUNCTION ADDED")
     print("📍 CLICK THE FIRE BUTTON!")
+    print("📍 DRAG THE BUTTON AND MENU TO MOVE!")
 end)
 
 if not success then
