@@ -743,6 +743,7 @@ local function CreateUltimateUI()
     OpenButton.Font = Enum.Font.GothamBlack
     OpenButton.TextSize = 14
     OpenButton.TextWrapped = true
+    OpenButton.Visible = false -- Скрываем кнопку, так как используем LeftAlt
     OpenButton.Parent = ScreenGui
 
     local OpenButtonCorner = Instance.new("UICorner")
@@ -814,9 +815,11 @@ local function CreateUltimateUI()
     local Tabs = {"Visuals", "Combat", "Movement", "Player", "Weapon", "Server", "Trolling"}
     local TabButtons = {}
     
+    -- Функция для "сломанных" вкладок - не меняет цвет и не обновляет контент
     local function UpdateTabColors(activeTab)
+        -- НИЧЕГО НЕ ДЕЛАЕМ - вкладки остаются одного цвета
         for _, btn in pairs(TabButtons) do
-            btn.BackgroundColor3 = btn.Text == activeTab and Colors.Accent or Colors.Secondary
+            btn.BackgroundColor3 = Colors.Secondary -- Все вкладки серые
         end
     end
 
@@ -825,7 +828,7 @@ local function CreateUltimateUI()
         local TabButton = Instance.new("TextButton")
         TabButton.Size = UDim2.new(0.12, 0, 1, 0)
         TabButton.Position = UDim2.new((i-1) * 0.14, 5, 0, 0)
-        TabButton.BackgroundColor3 = BlazixHub.CurrentTab == tabName and Colors.Accent or Colors.Secondary
+        TabButton.BackgroundColor3 = Colors.Secondary -- Все вкладки одного цвета
         TabButton.Text = tabName
         TabButton.TextColor3 = Colors.Text
         TabButton.Font = Enum.Font.GothamBold
@@ -836,10 +839,11 @@ local function CreateUltimateUI()
         TabCorner.CornerRadius = UDim.new(0.1, 0)
         TabCorner.Parent = TabButton
         
+        -- "СЛОМАННАЯ" ФУНКЦИЯ - вкладки не переключаются
         TabButton.MouseButton1Click:Connect(function()
-            BlazixHub.CurrentTab = tabName
-            UpdateTabColors(tabName)
-            UpdateTabContent()
+            -- НИЧЕГО НЕ ПРОИСХОДИТ при клике на вкладку
+            -- Вкладки остаются на месте, контент не меняется
+            print("⚠️ Вкладки сломаны - переключение не работает!")
         end)
         
         table.insert(TabButtons, TabButton)
@@ -1003,7 +1007,7 @@ local function CreateUltimateUI()
         return ButtonFrame
     end
 
-    -- Update Tab Content
+    -- Update Tab Content - ПОКАЗЫВАЕМ ТОЛЬКО ВИЗУАЛЫ
     local function UpdateTabContent()
         -- Clear content
         local children = ContentFrame:GetChildren()
@@ -1016,120 +1020,20 @@ local function CreateUltimateUI()
 
         local yOffset = 5
         
-        if BlazixHub.CurrentTab == "Visuals" then
-            -- Visuals Tab - WORKING FUNCTIONS
-            local visuals = {
-                {"👁️ ESP", "ESP", ToggleESP},
-                {"💡 FullBright", "FullBright", ToggleFullBright},
-                {"🔍 X-Ray", "XRay", ToggleXRay},
-                {"🌙 Night Vision", "NightVision", ToggleNightVision},
-                {"🌫️ No Fog", "NoFog", nil}
-            }
-            
-            for i, visual in ipairs(visuals) do
-                local toggle = CreateWideToggle(visual[1], visual[2], visual[3])
-                toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                if i % 2 == 0 then yOffset = yOffset + 40 end
-            end
-            
-        elseif BlazixHub.CurrentTab == "Combat" then
-            -- Combat Tab - WORKING FUNCTIONS
-            local combat = {
-                {"🎯 Aimbot", "Aimbot", ToggleAimbot, Colors.Warning},
-                {"🔫 Trigger Bot", "TriggerBot", ToggleTriggerBot, Colors.Warning},
-                {"🥊 Auto Punch", "AutoPunch", ToggleAutoPunch, Colors.Warning},
-                {"💀 One Hit Kill", "OneHitKill", ToggleOneHitKill, Colors.Danger},
-                {"🎯 Auto Teleport", "AutoTeleport", ToggleAutoTeleport, Colors.Accent}
-            }
-            
-            for i, combatFeature in ipairs(combat) do
-                local toggle = CreateWideToggle(combatFeature[1], combatFeature[2], combatFeature[3], combatFeature[4])
-                toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                if i % 2 == 0 then yOffset = yOffset + 40 end
-            end
-            
-        elseif BlazixHub.CurrentTab == "Movement" then
-            -- Movement Tab - WORKING FUNCTIONS
-            local movement = {
-                {"🪽 Fly", "Fly", ToggleFly},
-                {"⚡ Speed", "Speed", ToggleSpeed},
-                {"🦘 Inf Jump", "InfiniteJump", ToggleInfiniteJump},
-                {"👻 Noclip", "Noclip", ToggleNoclip},
-                {"🚀 High Jump", "HighJump", ToggleHighJump},
-                {"💪 Inf Stamina", "InfiniteStamina", ToggleInfiniteStamina},
-                {"🛡️ No Fall Damage", "NoFallDamage", ToggleNoFallDamage}
-            }
-            
-            for i, move in ipairs(movement) do
-                local toggle = CreateWideToggle(move[1], move[2], move[3])
-                toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                if i % 2 == 0 then yOffset = yOffset + 40 end
-            end
-            
-        elseif BlazixHub.CurrentTab == "Player" then
-            -- Player Tab - WORKING FUNCTIONS
-            local player = {
-                {"🛡️ God Mode", "GodMode", ToggleGodMode},
-                {"🛡️ Anti Kick", "AntiKick", ToggleAntiKick},
-                {"💀 Kill All", nil, KillAllPlayers, Colors.Danger}
-            }
-            
-            for i, playerFeature in ipairs(player) do
-                if playerFeature[2] then
-                    local toggle = CreateWideToggle(playerFeature[1], playerFeature[2], playerFeature[3], playerFeature[4])
-                    toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                    if i % 2 == 0 then yOffset = yOffset + 40 end
-                else
-                    local button = CreateWideButton(playerFeature[1], playerFeature[3], playerFeature[4])
-                    button.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                    if i % 2 == 0 then yOffset = yOffset + 40 end
-                end
-            end
-            
-        elseif BlazixHub.CurrentTab == "Weapon" then
-            -- Weapon Tab - WORKING FUNCTIONS
-            local weapon = {
-                {"🎯 Inf Ammo", "InfiniteAmmo", ToggleInfiniteAmmo},
-                {"⚡ Rapid Fire", "RapidFireWeapon", ToggleRapidFireWeapon, Colors.Warning},
-                {"💀 One Hit Kill", "OneHitKill", ToggleOneHitKill, Colors.Danger}
-            }
-            
-            for i, weaponFeature in ipairs(weapon) do
-                local toggle = CreateWideToggle(weaponFeature[1], weaponFeature[2], weaponFeature[3], weaponFeature[4])
-                toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                if i % 2 == 0 then yOffset = yOffset + 40 end
-            end
-            
-        elseif BlazixHub.CurrentTab == "Server" then
-            -- Server Tab - WORKING FUNCTIONS
-            local server = {
-                {"🐌 Lag Server", "LagServer", ToggleLagServer, Colors.Warning},
-                {"🛡️ Anti Kick", "AntiKick", ToggleAntiKick}
-            }
-            
-            for i, serverFeature in ipairs(server) do
-                local toggle = CreateWideToggle(serverFeature[1], serverFeature[2], serverFeature[3], serverFeature[4])
-                toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                if i % 2 == 0 then yOffset = yOffset + 40 end
-            end
-            
-            -- Server control buttons
-            CreateWideButton("💥 CRASH SERVER", CrashServer, Colors.Danger).Position = UDim2.new(0, 5, 0, yOffset)
-            CreateWideButton("💀 KILL ALL", KillAllPlayers, Colors.Danger).Position = UDim2.new(0.5, 5, 0, yOffset)
-            yOffset = yOffset + 40
-            
-        elseif BlazixHub.CurrentTab == "Trolling" then
-            -- Trolling Tab - WORKING FUNCTIONS
-            local trolling = {
-                {"💬 Chat Spam", "ChatSpam", ToggleChatSpam, Colors.Warning},
-                {"😈 Annoy All", "AnnoyAll", ToggleAnnoyAll, Colors.Danger}
-            }
-            
-            for i, troll in ipairs(trolling) do
-                local toggle = CreateWideToggle(troll[1], troll[2], troll[3], troll[4])
-                toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-                if i % 2 == 0 then yOffset = yOffset + 40 end
-            end
+        -- ВСЕГДА ПОКАЗЫВАЕМ ТОЛЬКО ВКЛАДКУ VISUALS
+        -- Visuals Tab - WORKING FUNCTIONS
+        local visuals = {
+            {"👁️ ESP", "ESP", ToggleESP},
+            {"💡 FullBright", "FullBright", ToggleFullBright},
+            {"🔍 X-Ray", "XRay", ToggleXRay},
+            {"🌙 Night Vision", "NightVision", ToggleNightVision},
+            {"🌫️ No Fog", "NoFog", nil}
+        }
+        
+        for i, visual in ipairs(visuals) do
+            local toggle = CreateWideToggle(visual[1], visual[2], visual[3])
+            toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
+            if i % 2 == 0 then yOffset = yOffset + 40 end
         end
         
         ContentFrame.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
@@ -1204,13 +1108,21 @@ local function CreateUltimateUI()
     -- Initialize first tab
     UpdateTabContent()
 
-    -- UI Controls
-    OpenButton.MouseButton1Click:Connect(function()
-        MainFrame.Visible = true
-        OpenButton.Visible = false
+    -- UI Controls - ОТКРЫТИЕ НА LEFTALT
+    local menuOpen = false
+    
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if input.KeyCode == Enum.KeyCode.LeftAlt then
+            menuOpen = not menuOpen
+            MainFrame.Visible = menuOpen
+            OpenButton.Visible = not menuOpen
+        end
     end)
 
     CloseButton.MouseButton1Click:Connect(function()
+        menuOpen = false
         MainFrame.Visible = false
         OpenButton.Visible = true
     end)
@@ -1265,9 +1177,9 @@ local success, err = pcall(function()
     print("🔥 BLAZIX HUB V6 LOADED SUCCESSFULLY!")
     print("✅ 30+ WORKING FUNCTIONS")
     print("✅ AUTO TELEPORT ADDED")
-    print("✅ MOVABLE BUTTON AND MENU")
-    print("✅ ALL TABS WORKING")
-    print("📍 CLICK THE FIRE BUTTON TO OPEN!")
+    print("✅ MENU OPENS ON LEFTALT")
+    print("❌ TABS BROKEN - CANNOT SWITCH")
+    print("📍 PRESS LEFTALT TO OPEN MENU!")
     print("📍 DRAG TO MOVE THE INTERFACE!")
 end)
 
