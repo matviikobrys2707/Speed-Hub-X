@@ -12,11 +12,11 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local BlazixHub = {
     Enabled = {
         -- Движение
-        Fly = false,
-        Speed = false,
-        InfiniteJump = false,
+        Fly = true,
+        Speed = true,
+        InfiniteJump = true,
         Noclip = false,
-        HighJump = false,
+        HighJump = true,
         AutoTeleport = false,
         
         -- Визуал
@@ -27,12 +27,12 @@ local BlazixHub = {
         Chams = false,
         
         -- Игрок
-        GodMode = false,
+        GodMode = true,
         InfiniteStamina = false,
         NoFallDamage = false,
         
         -- Оружие
-        InfiniteAmmo = false,
+        InfiniteAmmo = true,
         
         -- Бой
         Aimbot = false,
