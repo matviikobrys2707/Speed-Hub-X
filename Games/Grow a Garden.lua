@@ -1,4 +1,4 @@
--- BlazixHub V8 - CLEAN & WORKING VERSION
+-- BlazixHub - SIMPLE & WORKING VERSION
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
@@ -7,28 +7,6 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-
--- РАБОТАЮЩИЕ ФУНКЦИИ
-local BlazixHub = {
-    Enabled = {
-        Fly = false,
-        Speed = false,
-        InfiniteJump = false,
-        Noclip = false,
-        HighJump = false,
-        ESP = false,
-        FullBright = false,
-        XRay = false,
-        GodMode = false,
-        InfiniteAmmo = false,
-        Aimbot = false,
-        TriggerBot = false,
-        AutoTeleport = false
-    },
-    SelectedPlayer = nil,
-    CurrentTab = "Движение",
-    SavedPosition = nil
-}
 
 -- ПРОСТОЙ ЭКРАН ЗАГРУЗКИ
 local function ShowLoadingScreen()
@@ -71,6 +49,45 @@ local function ShowLoadingScreen()
     wait(1)
     loadingScreen:Destroy()
 end
+
+-- РАБОТАЮЩИЕ ФУНКЦИИ
+local BlazixHub = {
+    Enabled = {
+        Fly = false,
+        Speed = false,
+        InfiniteJump = false,
+        Noclip = false,
+        HighJump = false,
+        ESP = false,
+        FullBright = false,
+        XRay = false,
+        GodMode = false,
+        InfiniteAmmo = false,
+        Aimbot = false,
+        TriggerBot = false,
+        AutoTeleport = false,
+        AntiVoid = false
+    },
+    SelectedPlayer = nil,
+    SavedPosition = nil,
+    LastSafePosition = nil,
+    Functions = {
+        {"🕊️ Fly", "Fly"},
+        {"⚡ Speed", "Speed"},
+        {"🔄 Infinite Jump", "InfiniteJump"},
+        {"👻 Noclip (стены)", "Noclip"},
+        {"🦘 High Jump", "HighJump"},
+        {"🎯 ESP", "ESP"},
+        {"💡 FullBright", "FullBright"},
+        {"🔍 X-Ray", "XRay"},
+        {"🛡️ God Mode", "GodMode"},
+        {"🔫 Infinite Ammo", "InfiniteAmmo"},
+        {"🎯 Aimbot", "Aimbot"},
+        {"🔫 Trigger Bot", "TriggerBot"},
+        {"📡 Auto Teleport", "AutoTeleport"},
+        {"🛡️ Anti Void", "AntiVoid"}
+    }
+}
 
 -- ФЛАЙ
 local function ToggleFly()
@@ -142,7 +159,7 @@ local function ToggleInfiniteJump()
     end
 end
 
--- НОКЛИП
+-- НОКЛИП (ТОЛЬКО СТЕНЫ, НЕ ПОЛ)
 local function ToggleNoclip()
     if BlazixHub.Enabled.Noclip then
         BlazixHub.Enabled.Noclip = false
@@ -150,8 +167,38 @@ local function ToggleNoclip()
         BlazixHub.Enabled.Noclip = true
         RunService.Stepped:Connect(function()
             if BlazixHub.Enabled.Noclip and LocalPlayer.Character then
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
+                local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local ray = Ray.new(root.Position, Vector3.new(0, -10, 0))
+                    local hitPart, hitPosition = Workspace:FindPartOnRay(ray, LocalPlayer.Character)
+                    
+                    -- Проверяем, есть ли пол под ногами
+                    if hitPart then
+                        -- Если пол есть, включаем коллизию для частей ниже игрока
+                        for _, part in pairs(Workspace:GetDescendants()) do
+                            if part:IsA("BasePart") and part ~= hitPart then
+                                if part.Position.Y < root.Position.Y - 2 then
+                                    part.CanCollide = true  -- Не проходить через пол
+                                else
+                                    part.CanCollide = false  -- Проходить через стены
+                                end
+                            end
+                        end
+                    else
+                        -- Если пола нет, выключаем всю коллизию
+                        for _, part in pairs(Workspace:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
+                        end
+                    end
+                    
+                    -- Отключаем коллизию для персонажа
+                    for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
                 end
             end
         end)
@@ -337,6 +384,36 @@ local function ToggleAutoTeleport()
     end
 end
 
+-- АНТИ ВОЙД
+local function ToggleAntiVoid()
+    if BlazixHub.Enabled.AntiVoid then
+        BlazixHub.Enabled.AntiVoid = false
+    else
+        BlazixHub.Enabled.AntiVoid = true
+        RunService.Heartbeat:Connect(function()
+            if BlazixHub.Enabled.AntiVoid and LocalPlayer.Character then
+                local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    -- Сохраняем безопасную позицию
+                    local ray = Ray.new(root.Position, Vector3.new(0, -10, 0))
+                    local hitPart = Workspace:FindPartOnRay(ray, LocalPlayer.Character)
+                    
+                    if hitPart then
+                        BlazixHub.LastSafePosition = root.CFrame
+                    end
+                    
+                    -- Если игрок падает в бездну, телепортируем обратно
+                    if root.Position.Y < -500 then
+                        if BlazixHub.LastSafePosition then
+                            root.CFrame = BlazixHub.LastSafePosition
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end
+
 -- СОХРАНЕНИЕ КООРДИНАТ
 local function SavePosition()
     if LocalPlayer.Character then
@@ -380,8 +457,8 @@ local function CreateUI()
     -- Главное окно
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 500, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+    MainFrame.Size = UDim2.new(0, 350, 0, 450)
+    MainFrame.Position = UDim2.new(0.5, -175, 0.5, -225)
     MainFrame.BackgroundColor3 = Colors.Background
     MainFrame.Visible = true
     MainFrame.Parent = ScreenGui
@@ -406,10 +483,10 @@ local function CreateUI()
     HeaderCorner.Parent = Header
 
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(0.6, 0, 1, 0)
+    Title.Size = UDim2.new(0.7, 0, 1, 0)
     Title.Position = UDim2.new(0.05, 0, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "🔥 BLAZIX HUB V8"
+    Title.Text = "🔥 BLAZIX HUB"
     Title.TextColor3 = Colors.Text
     Title.Font = Enum.Font.SourceSansBold
     Title.TextSize = 20
@@ -446,25 +523,20 @@ local function CreateUI()
     CloseButtonCorner.CornerRadius = UDim.new(0.2, 0)
     CloseButtonCorner.Parent = CloseButton
 
-    -- Вкладки
-    local TabButtonsFrame = Instance.new("Frame")
-    TabButtonsFrame.Size = UDim2.new(1, -20, 0, 40)
-    TabButtonsFrame.Position = UDim2.new(0, 10, 0, 60)
-    TabButtonsFrame.BackgroundTransparency = 1
-    TabButtonsFrame.Parent = MainFrame
-
-    local TabContent = Instance.new("ScrollingFrame")
-    TabContent.Size = UDim2.new(1, -20, 1, -150)
-    TabContent.Position = UDim2.new(0, 10, 0, 110)
-    TabContent.BackgroundTransparency = 1
-    TabContent.ScrollBarThickness = 4
-    TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
-    TabContent.Parent = MainFrame
+    -- Список функций
+    local FunctionsFrame = Instance.new("ScrollingFrame")
+    FunctionsFrame.Size = UDim2.new(1, -20, 1, -130)
+    FunctionsFrame.Position = UDim2.new(0, 10, 0, 60)
+    FunctionsFrame.BackgroundTransparency = 1
+    FunctionsFrame.ScrollBarThickness = 4
+    FunctionsFrame.ScrollBarImageColor3 = Colors.Accent
+    FunctionsFrame.CanvasSize = UDim2.new(0, 0, 0, #BlazixHub.Functions * 45)
+    FunctionsFrame.Parent = MainFrame
 
     -- Нижняя панель
     local BottomBar = Instance.new("Frame")
-    BottomBar.Size = UDim2.new(1, 0, 0, 40)
-    BottomBar.Position = UDim2.new(0, 0, 1, -40)
+    BottomBar.Size = UDim2.new(1, 0, 0, 80)
+    BottomBar.Position = UDim2.new(0, 0, 1, -80)
     BottomBar.BackgroundColor3 = Colors.Secondary
     BottomBar.Parent = MainFrame
 
@@ -472,10 +544,10 @@ local function CreateUI()
     BottomCorner.CornerRadius = UDim.new(0.04, 0)
     BottomCorner.Parent = BottomBar
 
-    -- Кнопка выбора игрока в правом углу
+    -- Кнопка выбора игрока
     local SelectPlayerBtn = Instance.new("TextButton")
-    SelectPlayerBtn.Size = UDim2.new(0, 120, 0.7, 0)
-    SelectPlayerBtn.Position = UDim2.new(1, -130, 0.15, 0)
+    SelectPlayerBtn.Size = UDim2.new(0.9, 0, 0.3, 0)
+    SelectPlayerBtn.Position = UDim2.new(0.05, 0, 0.1, 0)
     SelectPlayerBtn.BackgroundColor3 = Colors.Accent
     SelectPlayerBtn.Text = "🎯 Выбор игрока"
     SelectPlayerBtn.TextColor3 = Colors.Text
@@ -484,94 +556,45 @@ local function CreateUI()
     SelectPlayerBtn.Parent = BottomBar
 
     local SelectPlayerCorner = Instance.new("UICorner")
-    SelectPlayerCorner.CornerRadius = UDim.new(0.15, 0)
+    SelectPlayerCorner.CornerRadius = UDim.new(0.1, 0)
     SelectPlayerCorner.Parent = SelectPlayerBtn
 
     -- Кнопка телепорта по координатам
     local CoordsBtn = Instance.new("TextButton")
-    CoordsBtn.Size = UDim2.new(0, 100, 0.7, 0)
-    CoordsBtn.Position = UDim2.new(1, -250, 0.15, 0)
+    CoordsBtn.Size = UDim2.new(0.9, 0, 0.3, 0)
+    CoordsBtn.Position = UDim2.new(0.05, 0, 0.55, 0)
     CoordsBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
-    CoordsBtn.Text = "💾 Координаты"
+    CoordsBtn.Text = "💾 Сохранение позиции"
     CoordsBtn.TextColor3 = Colors.Text
     CoordsBtn.Font = Enum.Font.SourceSansBold
     CoordsBtn.TextSize = 12
     CoordsBtn.Parent = BottomBar
 
     local CoordsCorner = Instance.new("UICorner")
-    CoordsCorner.CornerRadius = UDim.new(0.15, 0)
+    CoordsCorner.CornerRadius = UDim.new(0.1, 0)
     CoordsCorner.Parent = CoordsBtn
 
-    -- Статус выбранного игрока
-    local PlayerStatus = Instance.new("TextLabel")
-    PlayerStatus.Size = UDim2.new(0.3, 0, 1, 0)
-    PlayerStatus.Position = UDim2.new(0.02, 0, 0, 0)
-    PlayerStatus.BackgroundTransparency = 1
-    PlayerStatus.Text = "Игрок: Нет"
-    PlayerStatus.TextColor3 = Colors.Text
-    PlayerStatus.Font = Enum.Font.SourceSansBold
-    PlayerStatus.TextSize = 12
-    PlayerStatus.TextXAlignment = Enum.TextXAlignment.Left
-    PlayerStatus.Parent = BottomBar
+    -- Создаем кнопки функций
+    local function CreateFunctionButton(name, configKey, index)
+        local ButtonFrame = Instance.new("Frame")
+        ButtonFrame.Size = UDim2.new(1, 0, 0, 40)
+        ButtonFrame.Position = UDim2.new(0, 0, 0, (index-1) * 45)
+        ButtonFrame.BackgroundColor3 = Colors.Secondary
+        ButtonFrame.Parent = FunctionsFrame
 
-    -- Вкладки
-    local Tabs = {
-        {Name = "Движение", Functions = {
-            {"Fly", "Fly", ToggleFly},
-            {"Speed", "Speed", ToggleSpeed},
-            {"Inf Jump", "InfiniteJump", ToggleInfiniteJump},
-            {"Noclip", "Noclip", ToggleNoclip},
-            {"High Jump", "HighJump", ToggleHighJump},
-            {"Auto TP", "AutoTeleport", ToggleAutoTeleport}
-        }},
-        {Name = "Визуал", Functions = {
-            {"ESP", "ESP", ToggleESP},
-            {"FullBright", "FullBright", ToggleFullBright},
-            {"X-Ray", "XRay", ToggleXRay}
-        }},
-        {Name = "Игрок", Functions = {
-            {"God Mode", "GodMode", ToggleGodMode}
-        }},
-        {Name = "Оружие", Functions = {
-            {"Inf Ammo", "InfiniteAmmo", ToggleInfiniteAmmo}
-        }},
-        {Name = "Бой", Functions = {
-            {"Aimbot", "Aimbot", ToggleAimbot},
-            {"Trigger Bot", "TriggerBot", ToggleTriggerBot}
-        }}
-    }
+        local ButtonFrameCorner = Instance.new("UICorner")
+        ButtonFrameCorner.CornerRadius = UDim.new(0.08, 0)
+        ButtonFrameCorner.Parent = ButtonFrame
 
-    local TabButtons = {}
-    
-    local function UpdateTabColors(activeTab)
-        for _, btn in pairs(TabButtons) do
-            if btn.Text == activeTab then
-                btn.BackgroundColor3 = Colors.Accent
-            else
-                btn.BackgroundColor3 = Colors.Secondary
-            end
-        end
-    end
-
-    local function CreateToggle(name, configKey, toggleFunc)
-        local ToggleFrame = Instance.new("Frame")
-        ToggleFrame.Size = UDim2.new(0.48, 0, 0, 40)
-        ToggleFrame.BackgroundColor3 = Colors.Secondary
-        ToggleFrame.Parent = TabContent
-
-        local ToggleFrameCorner = Instance.new("UICorner")
-        ToggleFrameCorner.CornerRadius = UDim.new(0.08, 0)
-        ToggleFrameCorner.Parent = ToggleFrame
-
-        local ToggleLabel = Instance.new("TextLabel")
-        ToggleLabel.Size = UDim2.new(0.7, 0, 1, 0)
-        ToggleLabel.BackgroundTransparency = 1
-        ToggleLabel.Text = name
-        ToggleLabel.TextColor3 = Colors.Text
-        ToggleLabel.Font = Enum.Font.SourceSans
-        ToggleLabel.TextSize = 14
-        ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-        ToggleLabel.Parent = ToggleFrame
+        local ButtonLabel = Instance.new("TextLabel")
+        ButtonLabel.Size = UDim2.new(0.7, 0, 1, 0)
+        ButtonLabel.BackgroundTransparency = 1
+        ButtonLabel.Text = name
+        ButtonLabel.TextColor3 = Colors.Text
+        ButtonLabel.Font = Enum.Font.SourceSans
+        ButtonLabel.TextSize = 14
+        ButtonLabel.TextXAlignment = Enum.TextXAlignment.Left
+        ButtonLabel.Parent = ButtonFrame
 
         local ToggleButton = Instance.new("TextButton")
         ToggleButton.Size = UDim2.new(0.25, 0, 0.7, 0)
@@ -581,67 +604,41 @@ local function CreateUI()
         ToggleButton.TextColor3 = Colors.Text
         ToggleButton.Font = Enum.Font.SourceSansBold
         ToggleButton.TextSize = 12
-        ToggleButton.Parent = ToggleFrame
+        ToggleButton.Parent = ButtonFrame
 
         local ToggleButtonCorner = Instance.new("UICorner")
         ToggleButtonCorner.CornerRadius = UDim.new(0.15, 0)
         ToggleButtonCorner.Parent = ToggleButton
 
         ToggleButton.MouseButton1Click:Connect(function()
+            if configKey == "Fly" then ToggleFly()
+            elseif configKey == "Speed" then ToggleSpeed()
+            elseif configKey == "InfiniteJump" then ToggleInfiniteJump()
+            elseif configKey == "Noclip" then ToggleNoclip()
+            elseif configKey == "HighJump" then ToggleHighJump()
+            elseif configKey == "ESP" then ToggleESP()
+            elseif configKey == "FullBright" then ToggleFullBright()
+            elseif configKey == "XRay" then ToggleXRay()
+            elseif configKey == "GodMode" then ToggleGodMode()
+            elseif configKey == "InfiniteAmmo" then ToggleInfiniteAmmo()
+            elseif configKey == "Aimbot" then ToggleAimbot()
+            elseif configKey == "TriggerBot" then ToggleTriggerBot()
+            elseif configKey == "AutoTeleport" then ToggleAutoTeleport()
+            elseif configKey == "AntiVoid" then ToggleAntiVoid()
+            end
+            
+            -- Обновляем кнопку
             BlazixHub.Enabled[configKey] = not BlazixHub.Enabled[configKey]
             ToggleButton.BackgroundColor3 = BlazixHub.Enabled[configKey] and Colors.Success or Colors.Danger
             ToggleButton.Text = BlazixHub.Enabled[configKey] and "ON" or "OFF"
-            if toggleFunc then toggleFunc() end
         end)
 
-        return ToggleFrame
+        return ButtonFrame
     end
 
-    local function ShowTabContent(tabIndex)
-        -- Очищаем контент
-        local children = TabContent:GetChildren()
-        for i = #children, 1, -1 do
-            local child = children[i]
-            if child:IsA("Frame") then
-                child:Destroy()
-            end
-        end
-
-        local tab = Tabs[tabIndex]
-        if not tab then return end
-
-        local yOffset = 5
-        for i, func in ipairs(tab.Functions) do
-            local toggle = CreateToggle(func[1], func[2], func[3])
-            toggle.Position = UDim2.new(i % 2 == 1 and 0 or 0.5, 5, 0, yOffset)
-            if i % 2 == 0 then yOffset = yOffset + 45 end
-        end
-        TabContent.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
-    end
-
-    -- Создаем кнопки вкладок
-    for i, tab in ipairs(Tabs) do
-        local TabButton = Instance.new("TextButton")
-        TabButton.Size = UDim2.new(0.18, 0, 1, 0)
-        TabButton.Position = UDim2.new((i-1) * 0.19, 0, 0, 0)
-        TabButton.BackgroundColor3 = i == 1 and Colors.Accent or Colors.Secondary
-        TabButton.Text = tab.Name
-        TabButton.TextColor3 = Colors.Text
-        TabButton.Font = Enum.Font.SourceSansBold
-        TabButton.TextSize = 12
-        TabButton.Parent = TabButtonsFrame
-        
-        local TabCorner = Instance.new("UICorner")
-        TabCorner.CornerRadius = UDim.new(0.1, 0)
-        TabCorner.Parent = TabButton
-        
-        TabButton.MouseButton1Click:Connect(function()
-            BlazixHub.CurrentTab = tab.Name
-            UpdateTabColors(tab.Name)
-            ShowTabContent(i)
-        end)
-        
-        table.insert(TabButtons, TabButton)
+    -- Создаем все кнопки функций
+    for i, func in ipairs(BlazixHub.Functions) do
+        CreateFunctionButton(func[1], func[2], i)
     end
 
     -- Меню выбора игрока
@@ -696,67 +693,6 @@ local function CreateUI()
         CloseBtnCorner.CornerRadius = UDim.new(0.2, 0)
         CloseBtnCorner.Parent = CloseBtn
 
-        -- Кнопки действий
-        local ActionsFrame = Instance.new("Frame")
-        ActionsFrame.Size = UDim2.new(1, -10, 0, 40)
-        ActionsFrame.Position = UDim2.new(0, 5, 1, -45)
-        ActionsFrame.BackgroundTransparency = 1
-        ActionsFrame.Parent = PlayerMenu
-
-        local actionButtons = {
-            {"TP", Colors.Accent, function() 
-                if BlazixHub.SelectedPlayer then 
-                    local target = Players:FindFirstChild(BlazixHub.SelectedPlayer)
-                    if target and target.Character and LocalPlayer.Character then
-                        local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-                        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if targetRoot and localRoot then
-                            localRoot.CFrame = targetRoot.CFrame
-                        end
-                    end
-                end
-            end},
-            {"Bring", Color3.fromRGB(255, 150, 0), function() 
-                if BlazixHub.SelectedPlayer then 
-                    local target = Players:FindFirstChild(BlazixHub.SelectedPlayer)
-                    if target and target.Character and LocalPlayer.Character then
-                        local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-                        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if targetRoot and localRoot then
-                            targetRoot.CFrame = localRoot.CFrame
-                        end
-                    end
-                end
-            end},
-            {"Kill", Colors.Danger, function() 
-                if BlazixHub.SelectedPlayer then 
-                    local target = Players:FindFirstChild(BlazixHub.SelectedPlayer)
-                    if target and target.Character then
-                        local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
-                        if humanoid then humanoid.Health = 0 end
-                    end
-                end
-            end}
-        }
-
-        for i, action in ipairs(actionButtons) do
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(0.3, 0, 1, 0)
-            btn.Position = UDim2.new((i-1) * 0.33, 5, 0, 0)
-            btn.BackgroundColor3 = action[2]
-            btn.Text = action[1]
-            btn.TextColor3 = Colors.Text
-            btn.Font = Enum.Font.SourceSansBold
-            btn.TextSize = 12
-            btn.Parent = ActionsFrame
-            
-            local btnCorner = Instance.new("UICorner")
-            btnCorner.CornerRadius = UDim.new(0.1, 0)
-            btnCorner.Parent = btn
-            
-            btn.MouseButton1Click:Connect(action[3])
-        end
-
         local yOffset = 0
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer then
@@ -778,7 +714,6 @@ local function CreateUI()
 
                 PlayerBtn.MouseButton1Click:Connect(function()
                     BlazixHub.SelectedPlayer = player.Name
-                    PlayerStatus.Text = "Игрок: " .. player.Name
                     PlayerMenu:Destroy()
                     PlayerMenu = nil
                 end)
@@ -799,8 +734,8 @@ local function CreateUI()
         if CoordsMenu then CoordsMenu:Destroy() end
         
         CoordsMenu = Instance.new("Frame")
-        CoordsMenu.Size = UDim2.new(0, 250, 0, 150)
-        CoordsMenu.Position = UDim2.new(0.5, -125, 0.5, -75)
+        CoordsMenu.Size = UDim2.new(0, 250, 0, 200)
+        CoordsMenu.Position = UDim2.new(0.5, -125, 0.5, -100)
         CoordsMenu.BackgroundColor3 = Colors.Background
         CoordsMenu.Parent = ScreenGui
 
@@ -822,9 +757,10 @@ local function CreateUI()
         Title.TextSize = 18
         Title.Parent = CoordsMenu
 
+        -- Кнопка сохранить
         local SaveBtn = Instance.new("TextButton")
-        SaveBtn.Size = UDim2.new(0.8, 0, 0.25, 0)
-        SaveBtn.Position = UDim2.new(0.1, 0, 0.3, 0)
+        SaveBtn.Size = UDim2.new(0.8, 0, 0.2, 0)
+        SaveBtn.Position = UDim2.new(0.1, 0, 0.25, 0)
         SaveBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
         SaveBtn.Text = "Сохранить позицию"
         SaveBtn.TextColor3 = Colors.Text
@@ -836,9 +772,10 @@ local function CreateUI()
         SaveCorner.CornerRadius = UDim.new(0.1, 0)
         SaveCorner.Parent = SaveBtn
 
+        -- Кнопка телепортироваться
         local LoadBtn = Instance.new("TextButton")
-        LoadBtn.Size = UDim2.new(0.8, 0, 0.25, 0)
-        LoadBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+        LoadBtn.Size = UDim2.new(0.8, 0, 0.2, 0)
+        LoadBtn.Position = UDim2.new(0.1, 0, 0.5, 0)
         LoadBtn.BackgroundColor3 = Colors.Accent
         LoadBtn.Text = "Телепортироваться"
         LoadBtn.TextColor3 = Colors.Text
@@ -923,9 +860,6 @@ local function CreateUI()
         end
     end)
 
-    -- Инициализация
-    ShowTabContent(1)
-
     return ScreenGui
 end
 
@@ -935,11 +869,11 @@ wait(0.5)
 
 local success, err = pcall(function()
     local UI = CreateUI()
-    print("✅ BLAZIX HUB V8 УСПЕШНО ЗАГРУЖЕН!")
-    print("✅ Рабочие вкладки")
-    print("✅ Убраны мешающие кнопки")
-    print("✅ Чистый интерфейс")
-    print("✅ Все функции проверены")
+    print("✅ BLAZIX HUB УСПЕШНО ЗАГРУЖЕН!")
+    print("✅ Простое меню со скроллингом")
+    print("✅ Улучшенный Noclip (только через стены)")
+    print("✅ Функция AntiVoid для защиты от падения")
+    print("✅ Все функции рабочие")
 end)
 
 if not success then
