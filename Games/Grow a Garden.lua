@@ -1,4 +1,4 @@
--- BLAZIX HUB V6 - CUSTOM EDITION (FIXED UI & CLEANED FUNCTIONS)
+-- BLAZIX HUB V6 - LOADING EDITION (Fixed UI & Added Loader)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -8,8 +8,8 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- ULTIMATE CONFIG WITH CLEANED & WORKING FUNCTIONS
 local BlazixHub = {
@@ -49,10 +49,10 @@ local BlazixHub = {
     },
     Connections = {},
     SelectedPlayer = nil,
-    CurrentTab = "Movement" -- Start on Movement
+    CurrentTab = "Movement"
 }
 
--- === UTILITY FUNCTIONS ===
+-- === UTILITY & TOGGLE FUNCTIONS (SAME AS BEFORE) ===
 
 local function getRoot()
     return LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -62,11 +62,14 @@ local function getHumanoid()
     return LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 end
 
+-- (ToggleMap functions: Fly, Speed, GodMode, ESP, etc., остаются здесь, но для краткости кода я их пропустил, они те же, что и в предыдущем ответе.)
+-- (ToggleMap: ... (Contains all working feature functions defined previously) ... )
+
+-- ВАЖНО: Функции ToggleMap должны быть определены перед функцией CreateUltimateUI
 local ToggleMap = {
-    [cite_start]-- Movement [cite: 396, 397, 398, 401]
+    -- Movement
     Fly = function(enabled) 
         if enabled then
-            -- Working Fly Logic
             BlazixHub.Connections.Fly = RunService.Heartbeat:Connect(function()
                 if not BlazixHub.Enabled.Fly or not getRoot() or not getHumanoid() then return end
                 getHumanoid().PlatformStand = true
@@ -78,11 +81,8 @@ local ToggleMap = {
                 if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + cam.CFrame.RightVector end
                 if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
                 if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
-                if direction.Magnitude > 0 then
-                    getRoot().Velocity = direction.Unit * 100
-                else
-                    getRoot().Velocity = Vector3.new(0, 0, 0)
-                end
+                if direction.Magnitude > 0 then getRoot().Velocity = direction.Unit * 100
+                else getRoot().Velocity = Vector3.new(0, 0, 0) end
             end)
         else
             if BlazixHub.Connections.Fly then BlazixHub.Connections.Fly:Disconnect() BlazixHub.Connections.Fly = nil end
@@ -90,34 +90,26 @@ local ToggleMap = {
         end
     end,
     Speed = function(enabled) 
-        if enabled then
-            BlazixHub.Connections.Speed = RunService.Heartbeat:Connect(function() if getHumanoid() then getHumanoid().WalkSpeed = 100 end end)
+        if enabled then BlazixHub.Connections.Speed = RunService.Heartbeat:Connect(function() if getHumanoid() then getHumanoid().WalkSpeed = 100 end end)
         else
             if BlazixHub.Connections.Speed then BlazixHub.Connections.Speed:Disconnect() BlazixHub.Connections.Speed = nil end
             if getHumanoid() then getHumanoid().WalkSpeed = 16 end
         end
     end,
     InfiniteJump = function(enabled) 
-        if enabled then
-            BlazixHub.Connections.InfiniteJump = UserInputService.JumpRequest:Connect(function() 
-                if BlazixHub.Enabled.InfiniteJump and getHumanoid() then getHumanoid():ChangeState(Enum.HumanoidStateType.Jumping) end
-            end)
-        else
-            if BlazixHub.Connections.InfiniteJump then BlazixHub.Connections.InfiniteJump:Disconnect() BlazixHub.Connections.InfiniteJump = nil end
-        end
+        if enabled then BlazixHub.Connections.InfiniteJump = UserInputService.JumpRequest:Connect(function() 
+            if BlazixHub.Enabled.InfiniteJump and getHumanoid() then getHumanoid():ChangeState(Enum.HumanoidStateType.Jumping) end end)
+        else if BlazixHub.Connections.InfiniteJump then BlazixHub.Connections.InfiniteJump:Disconnect() BlazixHub.Connections.InfiniteJump = nil end end
     end,
     HighJump = function(enabled) 
-        if enabled then
-            BlazixHub.Connections.HighJump = RunService.Heartbeat:Connect(function() if getHumanoid() then getHumanoid().JumpPower = 150 end end)
+        if enabled then BlazixHub.Connections.HighJump = RunService.Heartbeat:Connect(function() if getHumanoid() then getHumanoid().JumpPower = 150 end end)
         else
             if BlazixHub.Connections.HighJump then BlazixHub.Connections.HighJump:Disconnect() BlazixHub.Connections.HighJump = nil end
             if getHumanoid() then getHumanoid().JumpPower = 50 end
         end
     end,
     Noclip = function(enabled) 
-        if enabled then
-            [cite_start]-- Working Noclip Logic [cite: 403, 404]
-            BlazixHub.Connections.Noclip = RunService.Stepped:Connect(function()
+        if enabled then BlazixHub.Connections.Noclip = RunService.Stepped:Connect(function()
                 if BlazixHub.Enabled.Noclip and LocalPlayer.Character then
                     for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
                         if part:IsA("BasePart") then part.CanCollide = false end
@@ -134,9 +126,7 @@ local ToggleMap = {
         end
     end,
     AutoTeleport = function(enabled)
-        if enabled then
-            [cite_start]-- Working AutoTeleport Logic [cite: 390, 391]
-            BlazixHub.Connections.AutoTeleport = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.AutoTeleport = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.AutoTeleport and BlazixHub.SelectedPlayer then
                     local target = Players:FindFirstChild(BlazixHub.SelectedPlayer)
                     if target and target.Character and LocalPlayer.Character then
@@ -150,15 +140,12 @@ local ToggleMap = {
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.AutoTeleport then BlazixHub.Connections.AutoTeleport:Disconnect() BlazixHub.Connections.AutoTeleport = nil end
-        end
+        else if BlazixHub.Connections.AutoTeleport then BlazixHub.Connections.AutoTeleport:Disconnect() BlazixHub.Connections.AutoTeleport = nil end end
     end,
 
-    [cite_start]-- Combat [cite: 405, 406, 407, 414, 415, 416]
+    -- Combat
     Aimbot = function(enabled)
-        if enabled then
-            BlazixHub.Connections.Aimbot = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.Aimbot = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.Aimbot and BlazixHub.SelectedPlayer and getRoot() then
                     local target = Players:FindFirstChild(BlazixHub.SelectedPlayer)
                     if target and target.Character then
@@ -170,31 +157,23 @@ local ToggleMap = {
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.Aimbot then BlazixHub.Connections.Aimbot:Disconnect() BlazixHub.Connections.Aimbot = nil end
-        end
+        else if BlazixHub.Connections.Aimbot then BlazixHub.Connections.Aimbot:Disconnect() BlazixHub.Connections.Aimbot = nil end end
     end,
     TriggerBot = function(enabled)
-        if enabled then
-            BlazixHub.Connections.TriggerBot = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.TriggerBot = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.TriggerBot and BlazixHub.SelectedPlayer then
                     local target = Players:FindFirstChild(BlazixHub.SelectedPlayer)
                     if target and target.Character then
-                        [cite_start]-- Simulate Mouse Click [cite: 407]
                         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, false)
                         wait(0.1)
                         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, false)
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.TriggerBot then BlazixHub.Connections.TriggerBot:Disconnect() BlazixHub.Connections.TriggerBot = nil end
-        end
+        else if BlazixHub.Connections.TriggerBot then BlazixHub.Connections.TriggerBot:Disconnect() BlazixHub.Connections.TriggerBot = nil end end
     end,
     OneHitKill = function(enabled)
-        if enabled then
-            [cite_start]-- Working One Hit Kill (Modify Tool Damage) [cite: 414, 415]
-            BlazixHub.Connections.OneHitKill = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.OneHitKill = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.OneHitKill and LocalPlayer.Character then
                     local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
                     if tool then
@@ -206,14 +185,10 @@ local ToggleMap = {
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.OneHitKill then BlazixHub.Connections.OneHitKill:Disconnect() BlazixHub.Connections.OneHitKill = nil end
-        end
+        else if BlazixHub.Connections.OneHitKill then BlazixHub.Connections.OneHitKill:Disconnect() BlazixHub.Connections.OneHitKill = nil end end
     end,
     RapidFireWeapon = function(enabled)
-        if enabled then
-            [cite_start]-- Working Rapid Fire (Modify Tool Fire Rate) [cite: 416]
-            BlazixHub.Connections.RapidFireWeapon = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.RapidFireWeapon = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.RapidFireWeapon and LocalPlayer.Character then
                     local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
                     if tool then
@@ -225,14 +200,10 @@ local ToggleMap = {
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.RapidFireWeapon then BlazixHub.Connections.RapidFireWeapon:Disconnect() BlazixHub.Connections.RapidFireWeapon = nil end
-        end
+        else if BlazixHub.Connections.RapidFireWeapon then BlazixHub.Connections.RapidFireWeapon:Disconnect() BlazixHub.Connections.RapidFireWeapon = nil end end
     end,
     InfiniteAmmo = function(enabled)
-        if enabled then
-            [cite_start]-- Working Infinite Ammo [cite: 409, 410]
-            BlazixHub.Connections.InfiniteAmmo = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.InfiniteAmmo = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.InfiniteAmmo then
                     local containers = {LocalPlayer.Backpack, LocalPlayer.Character}
                     for _, container in pairs(containers) do
@@ -250,14 +221,10 @@ local ToggleMap = {
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.InfiniteAmmo then BlazixHub.Connections.InfiniteAmmo:Disconnect() BlazixHub.Connections.InfiniteAmmo = nil end
-        end
+        else if BlazixHub.Connections.InfiniteAmmo then BlazixHub.Connections.InfiniteAmmo:Disconnect() BlazixHub.Connections.InfiniteAmmo = nil end end
     end,
     AutoPunch = function(enabled)
-        if enabled then
-            [cite_start]-- Working Auto Punch [cite: 411, 412]
-            BlazixHub.Connections.AutoPunch = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.AutoPunch = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.AutoPunch and BlazixHub.SelectedPlayer then
                     local target = Players:FindFirstChild(BlazixHub.SelectedPlayer)
                     if target and target.Character and LocalPlayer.Character then
@@ -267,20 +234,15 @@ local ToggleMap = {
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.AutoPunch then BlazixHub.Connections.AutoPunch:Disconnect() BlazixHub.Connections.AutoPunch = nil end
-        end
+        else if BlazixHub.Connections.AutoPunch then BlazixHub.Connections.AutoPunch:Disconnect() BlazixHub.Connections.AutoPunch = nil end end
     end,
 
-    [cite_start]-- Visuals [cite: 404, 405, 412, 413]
+    -- Visuals
     ESP = function(enabled)
-        [cite_start]-- Working ESP (Highlight) [cite: 404]
         local function updateESP(player, add)
             if player == LocalPlayer or not player.Character then return end
-            
             local existingESP = player.Character:FindFirstChild("BlazixESP")
             if existingESP then existingESP:Destroy() end
-            
             if add then
                 local highlight = Instance.new("Highlight")
                 highlight.Name = "BlazixESP"
@@ -295,9 +257,7 @@ local ToggleMap = {
         if enabled then
             for _, player in ipairs(Players:GetPlayers()) do updateESP(player, true) end
             BlazixHub.Connections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
-                player.CharacterAdded:Connect(function(character)
-                    updateESP(player, BlazixHub.Enabled.ESP)
-                end)
+                player.CharacterAdded:Connect(function(character) updateESP(player, BlazixHub.Enabled.ESP) end)
             end)
         else
             if BlazixHub.Connections.PlayerAdded then BlazixHub.Connections.PlayerAdded:Disconnect() BlazixHub.Connections.PlayerAdded = nil end
@@ -305,23 +265,17 @@ local ToggleMap = {
         end
     end,
     XRay = function(enabled)
-        [cite_start]-- Working XRay [cite: 405]
         if enabled then
             for _, part in pairs(Workspace:GetDescendants()) do
-                if part:IsA("BasePart") and part.Transparency < 0.9 then
-                    part.LocalTransparencyModifier = 0.8
-                end
+                if part:IsA("BasePart") and part.Transparency < 0.9 then part.LocalTransparencyModifier = 0.8 end
             end
         else
             for _, part in pairs(Workspace:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.LocalTransparencyModifier = 0
-                end
+                if part:IsA("BasePart") then part.LocalTransparencyModifier = 0 end
             end
         end
     end,
     FullBright = function(enabled)
-        [cite_start]-- Working FullBright [cite: 404, 405]
         if enabled then
             Lighting.Ambient = Color3.new(1, 1, 1)
             Lighting.Brightness = 2
@@ -335,7 +289,6 @@ local ToggleMap = {
         end
     end,
     NightVision = function(enabled)
-        [cite_start]-- Working Night Vision [cite: 412, 413]
         if enabled then
             Lighting.Ambient = Color3.fromRGB(128, 128, 255)
             Lighting.ColorShift_Bottom = Color3.fromRGB(128, 128, 255)
@@ -349,53 +302,34 @@ local ToggleMap = {
         end
     end,
 
-    [cite_start]-- Player [cite: 401, 402, 413, 414]
+    -- Player
     GodMode = function(enabled)
-        if enabled then
-            [cite_start]-- Working God Mode [cite: 401, 402]
-            BlazixHub.Connections.GodMode = RunService.Heartbeat:Connect(function()
-                if BlazixHub.Enabled.GodMode and getHumanoid() then
-                    getHumanoid().Health = getHumanoid().MaxHealth
-                end
+        if enabled then BlazixHub.Connections.GodMode = RunService.Heartbeat:Connect(function()
+                if BlazixHub.Enabled.GodMode and getHumanoid() then getHumanoid().Health = getHumanoid().MaxHealth end
             end)
-        else
-            if BlazixHub.Connections.GodMode then BlazixHub.Connections.GodMode:Disconnect() BlazixHub.Connections.GodMode = nil end
-        end
+        else if BlazixHub.Connections.GodMode then BlazixHub.Connections.GodMode:Disconnect() BlazixHub.Connections.GodMode = nil end end
     end,
     InfiniteStamina = function(enabled)
-        if enabled then
-            [cite_start]-- Working Infinite Stamina [cite: 413, 414]
-            BlazixHub.Connections.InfiniteStamina = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.InfiniteStamina = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.InfiniteStamina and getHumanoid() then
                     for _, v in pairs(getHumanoid():GetChildren()) do
-                        if v:IsA("NumberValue") and string.lower(v.Name):find("stamina") then
-                            v.Value = 100 
-                        end
+                        if v:IsA("NumberValue") and string.lower(v.Name):find("stamina") then v.Value = 100 end
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.InfiniteStamina then BlazixHub.Connections.InfiniteStamina:Disconnect() BlazixHub.Connections.InfiniteStamina = nil end
-        end
+        else if BlazixHub.Connections.InfiniteStamina then BlazixHub.Connections.InfiniteStamina:Disconnect() BlazixHub.Connections.InfiniteStamina = nil end end
     end,
     NoFallDamage = function(enabled)
-        if enabled then
-            [cite_start]-- Working No Fall Damage [cite: 413]
-            BlazixHub.Connections.NoFallDamage = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.NoFallDamage = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.NoFallDamage and getRoot() then
-                    if getRoot().Velocity.Y < -50 then
-                        getRoot().Velocity = Vector3.new(getRoot().Velocity.X, -10, getRoot().Velocity.Z)
-                    end
+                    if getRoot().Velocity.Y < -50 then getRoot().Velocity = Vector3.new(getRoot().Velocity.X, -10, getRoot().Velocity.Z) end
                 end
             end)
-        else
-            if BlazixHub.Connections.NoFallDamage then BlazixHub.Connections.NoFallDamage:Disconnect() BlazixHub.Connections.NoFallDamage = nil end
-        end
+        else if BlazixHub.Connections.NoFallDamage then BlazixHub.Connections.NoFallDamage:Disconnect() BlazixHub.Connections.NoFallDamage = nil end end
     end,
 
-    [cite_start]-- Server/Troll [cite: 419, 420, 421, 422]
+    -- Server/Troll
     AntiKick = function(enabled)
-        [cite_start]-- Working Anti Kick [cite: 419, 420]
         if enabled then
             local mt = getrawmetatable(game)
             if mt then
@@ -410,9 +344,7 @@ local ToggleMap = {
         end
     end,
     LagServer = function(enabled)
-        if enabled then
-            [cite_start]-- Working Lag Server [cite: 420]
-            BlazixHub.Connections.LagServer = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.LagServer = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.LagServer then
                     for i = 1, 5 do
                         local part = Instance.new("Part")
@@ -424,106 +356,167 @@ local ToggleMap = {
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.LagServer then BlazixHub.Connections.LagServer:Disconnect() BlazixHub.Connections.LagServer = nil end
-        end
+        else if BlazixHub.Connections.LagServer then BlazixHub.Connections.LagServer:Disconnect() BlazixHub.Connections.LagServer = nil end end
     end,
     ChatSpam = function(enabled)
-        if enabled then
-            [cite_start]-- Working Chat Spam [cite: 421]
-            BlazixHub.Connections.ChatSpam = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.ChatSpam = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.ChatSpam then
                     local messages = {"🔥 BLAZIX HUB - BEST SCRIPT!", "💀 GET DESTROYED BY BLAZIX!", "🚀 USING BLAZIX HUB V6!"}
                     local randomMsg = messages[math.random(1, #messages)]
-                    pcall(function()
-                        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(randomMsg, "All")
-                    end)
+                    pcall(function() game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(randomMsg, "All") end)
                     wait(3)
                 end
             end)
-        else
-            if BlazixHub.Connections.ChatSpam then BlazixHub.Connections.ChatSpam:Disconnect() BlazixHub.Connections.ChatSpam = nil end
-        end
+        else if BlazixHub.Connections.ChatSpam then BlazixHub.Connections.ChatSpam:Disconnect() BlazixHub.Connections.ChatSpam = nil end end
     end,
     AnnoyAll = function(enabled)
-        if enabled then
-            [cite_start]-- Working Annoy All (Random Player Movement) [cite: 422]
-            BlazixHub.Connections.AnnoyAll = RunService.Heartbeat:Connect(function()
+        if enabled then BlazixHub.Connections.AnnoyAll = RunService.Heartbeat:Connect(function()
                 if BlazixHub.Enabled.AnnoyAll then
                     for _, player in ipairs(Players:GetPlayers()) do
                         if player ~= LocalPlayer and player.Character then
                             local root = player.Character:FindFirstChild("HumanoidRootPart")
-                            if root then
-                                root.Velocity = Vector3.new(math.random(-50, 50), math.random(0, 50), math.random(-50, 50))
-                            end
+                            if root then root.Velocity = Vector3.new(math.random(-50, 50), math.random(0, 50), math.random(-50, 50)) end
                         end
                     end
                 end
             end)
-        else
-            if BlazixHub.Connections.AnnoyAll then BlazixHub.Connections.AnnoyAll:Disconnect() BlazixHub.Connections.AnnoyAll = nil end
-        end
+        else if BlazixHub.Connections.AnnoyAll then BlazixHub.Connections.AnnoyAll:Disconnect() BlazixHub.Connections.AnnoyAll = nil end end
     end,
 }
 
--- === ACTION FUNCTIONS ===
-
 local function TeleportToPlayer(playerName)
-    [cite_start]-- Working Teleport To Player [cite: 428]
     local target = Players:FindFirstChild(playerName)
     if target and target.Character and getRoot() then
         local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-        if targetRoot then
-            getRoot().CFrame = targetRoot.CFrame
-        end
+        if targetRoot then getRoot().CFrame = targetRoot.CFrame end
     end
 end
 
 local function BringPlayer(playerName)
-    [cite_start]-- Working Bring Player [cite: 428]
     local target = Players:FindFirstChild(playerName)
     if target and target.Character and getRoot() then
         local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-        if targetRoot then
-            targetRoot.CFrame = getRoot().CFrame
-        end
+        if targetRoot then targetRoot.CFrame = getRoot().CFrame end
     end
 end
 
 local function KillPlayer(playerName)
-    [cite_start]-- Working Kill Player [cite: 428]
     local target = Players:FindFirstChild(playerName)
     if target and target.Character then
         local humanoid = target.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then 
-            humanoid.Health = 0
-        end
+        if humanoid then humanoid.Health = 0 end
     end
 end
 
 local function KillAllPlayers()
-    [cite_start]-- Working Kill All Players [cite: 429]
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then 
-                humanoid.Health = 0
-            end
+            if humanoid then humanoid.Health = 0 end
         end
     end
 end
 
-[cite_start]-- Function to handle script cleanup and closing [cite: 429, 430]
 local function CloseScript()
     for name, connection in pairs(BlazixHub.Connections) do
         if connection then connection:Disconnect() end
     end
     for key, _ in pairs(BlazixHub.Enabled) do BlazixHub.Enabled[key] = false end
     if CoreGui:FindFirstChild("BlazixUltimate") then CoreGui:FindFirstChild("BlazixUltimate"):Destroy() end
-    print("🔴 BLAZIX HUB CLOSED - ALL FUNCTIONS STOPPED")
 end
 
--- === UI CREATION (FIXED FOR VERTICAL TABS) ===
+-- === LOADER UI CREATION ===
+
+local function CreateLoaderUI(parentGui)
+    local Colors = {
+        Background = Color3.fromRGB(15, 15, 25),
+        Accent = Color3.fromRGB(0, 100, 255),
+        Text = Color3.fromRGB(240, 240, 240),
+    }
+
+    local LoaderGui = Instance.new("ScreenGui")
+    LoaderGui.Name = "BlazixLoader"
+    LoaderGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    LoaderGui.ResetOnSpawn = false
+    LoaderGui.Parent = parentGui
+
+    local LoaderFrame = Instance.new("Frame")
+    LoaderFrame.Name = "LoaderFrame"
+    LoaderFrame.Size = UDim2.new(0, 300, 0, 150)
+    LoaderFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
+    LoaderFrame.BackgroundColor3 = Colors.Background
+    LoaderFrame.Parent = LoaderGui
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0.05, 0)
+    Corner.Parent = LoaderFrame
+
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, 0, 0.4, 0)
+    Title.Position = UDim2.new(0, 0, 0.1, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = "🔥 BLAZIX HUB V6"
+    Title.TextColor3 = Colors.Accent
+    Title.Font = Enum.Font.GothamBlack
+    Title.TextSize = 24
+    Title.Parent = LoaderFrame
+
+    local StatusLabel = Instance.new("TextLabel")
+    StatusLabel.Name = "StatusLabel"
+    StatusLabel.Size = UDim2.new(1, 0, 0.3, 0)
+    StatusLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    StatusLabel.BackgroundTransparency = 1
+    StatusLabel.Text = "Инициализация..."
+    StatusLabel.TextColor3 = Colors.Text
+    StatusLabel.Font = Enum.Font.Gotham
+    StatusLabel.TextSize = 16
+    StatusLabel.Parent = LoaderFrame
+
+    local BarFrame = Instance.new("Frame")
+    BarFrame.Size = UDim2.new(0.8, 0, 0, 10)
+    BarFrame.Position = UDim2.new(0.1, 0, 0.75, 0)
+    BarFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    BarFrame.Parent = LoaderFrame
+    
+    local LoadingBar = Instance.new("Frame")
+    LoadingBar.Name = "LoadingBar"
+    LoadingBar.Size = UDim2.new(0, 0, 1, 0)
+    LoadingBar.BackgroundColor3 = Colors.Accent
+    LoadingBar.Parent = BarFrame
+    
+    return LoaderGui, StatusLabel, LoadingBar
+end
+
+local function StartLoadingAnimation(StatusLabel, LoadingBar)
+    local TweenInfo = TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    
+    -- Animate the bar
+    TweenService:Create(LoadingBar, TweenInfo, {Size = UDim2.new(1, 0, 1, 0)}):Play()
+    
+    -- Update status text
+    local steps = {
+        {"Инициализация...", 0.5},
+        {"Проверка функций... (33%)", 0.5},
+        {"Компиляция UI... (66%)", 0.5},
+        {"Загрузка ресурсов... (99%)", 1.5},
+    }
+    
+    local startTime = tick()
+    local stepIndex = 1
+    
+    while tick() - startTime < 3 do
+        if stepIndex <= #steps then
+            StatusLabel.Text = steps[stepIndex][1]
+            wait(steps[stepIndex][2])
+            stepIndex = stepIndex + 1
+        else
+            StatusLabel.Text = "Запуск меню..."
+            wait(0.1)
+        end
+    end
+end
+
+-- === MAIN UI CREATION (SAME AS BEFORE) ===
 
 local function CreateUltimateUI()
     local Colors = {
@@ -549,14 +542,14 @@ local function CreateUltimateUI()
     MainFrame.Size = UDim2.new(0, 600, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
     MainFrame.BackgroundColor3 = Colors.Background
-    [cite_start]MainFrame.Visible = true -- Меню сразу видно при запуске! [cite: 436]
+    MainFrame.Visible = true -- Стартует видимо, так как Loader уже исчез
     MainFrame.Parent = ScreenGui
     
     local MainFrameCorner = Instance.new("UICorner")
     MainFrameCorner.CornerRadius = UDim.new(0.02, 0)
     MainFrameCorner.Parent = MainFrame
 
-    [cite_start]-- Header (Used for Title and Dragging) [cite: 437]
+    -- Header (Used for Title and Dragging)
     local Header = Instance.new("Frame")
     Header.Size = UDim2.new(1, 0, 0, 40)
     Header.BackgroundColor3 = Colors.Secondary
@@ -573,7 +566,7 @@ local function CreateUltimateUI()
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = Header
 
-    [cite_start]-- Close Button [cite: 438]
+    -- Close Button
     local CloseButton = Instance.new("TextButton")
     CloseButton.Size = UDim2.new(0, 35, 0, 35)
     CloseButton.Position = UDim2.new(1, -45, 0.5, -17.5)
@@ -583,11 +576,9 @@ local function CreateUltimateUI()
     CloseButton.Font = Enum.Font.GothamBlack
     CloseButton.TextSize = 16
     CloseButton.Parent = Header
-    CloseButton.MouseButton1Click:Connect(function()
-        CloseScript()
-    end)
+    CloseButton.MouseButton1Click:Connect(function() CloseScript() end)
     
-    [cite_start]-- Hide Button (Toggle Menu Visibility) [cite: 438]
+    -- Hide Button (Toggle Menu Visibility)
     local HideButton = Instance.new("TextButton")
     HideButton.Size = UDim2.new(0, 35, 0, 35)
     HideButton.Position = UDim2.new(1, -85, 0.5, -17.5)
@@ -597,11 +588,9 @@ local function CreateUltimateUI()
     HideButton.Font = Enum.Font.GothamBlack
     HideButton.TextSize = 16
     HideButton.Parent = Header
-    HideButton.MouseButton1Click:Connect(function()
-        MainFrame.Visible = false
-    end)
+    HideButton.MouseButton1Click:Connect(function() MainFrame.Visible = false end)
     
-    [cite_start]-- Player Selection Frame (Bottom of menu) [cite: 445]
+    -- Player Selection Frame (Bottom of menu)
     local PlayerFrame = Instance.new("Frame")
     PlayerFrame.Name = "PlayerFrame"
     PlayerFrame.Size = UDim2.new(1, 0, 0, 60)
@@ -649,11 +638,8 @@ local function CreateUltimateUI()
         button.TextSize = 10
         button.Parent = PlayerFrame
         button.MouseButton1Click:Connect(function()
-            if data[1] == "KILL ALL" then
-                data[3]()
-            elseif BlazixHub.SelectedPlayer then
-                data[3](BlazixHub.SelectedPlayer)
-            end
+            if data[1] == "KILL ALL" then data[3]()
+            elseif BlazixHub.SelectedPlayer then data[3](BlazixHub.SelectedPlayer) end
         end)
     end
     
@@ -680,7 +666,6 @@ local function CreateUltimateUI()
     ContentFrame.BackgroundColor3 = Colors.Background
     ContentFrame.Parent = MainFrame
 
-    -- Mapping content names to display names
     local TabDefinitions = {
         Movement = {Title = "🚀 Movement", Content = {}},
         Combat = {Title = "⚔️ Combat", Content = {}},
@@ -709,7 +694,6 @@ local function CreateUltimateUI()
         end
     end
 
-    -- Create Tab Buttons and Content Panels
     for tabName, tabData in pairs(TabDefinitions) do
         local TabButton = Instance.new("TextButton")
         TabButton.Name = tabName .. "Button"
@@ -738,7 +722,6 @@ local function CreateUltimateUI()
         
         TabDefinitions[tabName].ContentFrame = TabContent
         
-        -- FIXED: Tab Switching Logic
         TabButton.MouseButton1Click:Connect(function()
             BlazixHub.CurrentTab = tabName
             UpdateTabColors(tabName)
@@ -746,10 +729,8 @@ local function CreateUltimateUI()
         end)
     end
     
-    -- Initial state
     UpdateTabColors(BlazixHub.CurrentTab)
 
-    -- Function to create a feature toggle
     local function CreateToggle(parentFrame, text, configKey, toggleFunc)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(0.48, 0, 0, 35)
@@ -786,7 +767,6 @@ local function CreateUltimateUI()
         return ToggleFrame
     end
     
-    -- Function to create a one-off action button
     local function CreateButton(parentFrame, text, callback, color)
         local ButtonFrame = Instance.new("Frame")
         ButtonFrame.Size = UDim2.new(0.48, 0, 0, 35)
@@ -814,17 +794,15 @@ local function CreateUltimateUI()
         ActionButton.Parent = ButtonFrame
         
         ActionButton.MouseButton1Click:Connect(function()
-            if BlazixHub.SelectedPlayer then
+            if BlazixHub.SelectedPlayer and callback ~= KillAllPlayers then
                 callback(BlazixHub.SelectedPlayer)
             else
-                callback() -- For KillAll, LagServer etc.
+                callback() 
             end
         end)
         return ButtonFrame
     end
 
-    -- === POPULATE TABS WITH WORKING FUNCTIONS ===
-    
     local TabsContent = {
         Movement = {
             {"🚀 Fly", "Fly", ToggleMap.Fly},
@@ -877,20 +855,18 @@ local function CreateUltimateUI()
                 item = CreateToggle(contentFrame, funcData[1], funcData[2], funcData[3])
             end
             
-            -- Position logic to arrange in 2 columns
             item.Position = isLeftColumn and UDim2.new(0, 0, 0, 0) or UDim2.new(0.5, 0, 0, 0)
             isLeftColumn = not isLeftColumn
         end
         
-        -- Recalculate Canvas Size for Scrolling Frame
         local listLayout = contentFrame:FindFirstChildOfClass("UIListLayout")
         if listLayout then
-            local totalHeight = #funcs * (listLayout.Padding.Offset + 35)
-            contentFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 10)
+            local totalHeight = math.ceil(#funcs / 2) * (listLayout.Padding.Offset + 35) + 10
+            contentFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
         end
     end
     
-    [cite_start]-- Player Selection Listbox Logic [cite: 471, 477]
+    -- Player Selection Listbox Logic (Same as before)
     SelectButton.MouseButton1Click:Connect(function() 
         local PlayerList = Instance.new("Frame")
         PlayerList.Size = UDim2.new(0, 200, 0, 300)
@@ -942,7 +918,7 @@ local function CreateUltimateUI()
         CloseBtn.MouseButton1Click:Connect(function() PlayerList:Destroy() end)
     end)
     
-    -- Dragging Logic (Copied from original script for convenience)
+    -- Dragging Logic
     local function MakeDraggable(gui)
         local dragging = false
         local dragInput = nil
@@ -969,29 +945,35 @@ local function CreateUltimateUI()
         end)
 
         UserInputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                update(input)
-            end
+            if input == dragInput and dragging then update(input) end
         end)
         
         UserInputService.InputEnded:Connect(function(input)
-             if input == dragInput and dragging then
-                 dragging = false
-             end
+             if input == dragInput and dragging then dragging = false end
         end)
     end
     
-    MakeDraggable(Header) -- Only drag the Header
+    MakeDraggable(Header)
     
     return ScreenGui
 end
 
--- === KEYBINDING AND INITIALIZATION (FIXED) ===
+-- === ГЛАВНАЯ ЛОГИКА ЗАПУСКА ===
 
+-- 1. Создаем и отображаем загрузочный экран
+local LoaderGui, StatusLabel, LoadingBar = CreateLoaderUI(CoreGui)
+
+-- 2. Запускаем анимацию загрузки (блокирующий вызов)
+StartLoadingAnimation(StatusLabel, LoadingBar)
+
+-- 3. Создаем основное меню (оно создастся сразу видимым)
 local UI = CreateUltimateUI()
 local MainFrame = UI:FindFirstChild("MainFrame")
 
--- FIXED: Menu Toggle Key (Left Control)
+-- 4. Удаляем загрузочный экран
+LoaderGui:Destroy()
+
+-- 5. Настраиваем переключение меню по LeftControl
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if input.KeyCode == Enum.KeyCode.LeftControl and not gameProcessed then
         MainFrame.Visible = not MainFrame.Visible
@@ -999,6 +981,5 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 print("🔥 BLAZIX HUB V6 - CUSTOM EDITION LOADED SUCCESSFULLY!")
-print("✅ FIXED VERTICAL TABS")
-print("✅ CLEANED TO ONLY WORKING FUNCTIONS")
+print("✅ FIXED UI & ADDED LOADER")
 print("📍 PRESS LEFTCONTROL TO TOGGLE MENU!")
