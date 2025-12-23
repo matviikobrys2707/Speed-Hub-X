@@ -1,204 +1,222 @@
--- BLAZIX HUB: REBORN (Optimized & Stable)
+-- BLAZIX HUB: TOWER OF HELL EDITION
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
-local Lighting = game:GetService("Lighting")
 
--- Конфигурация
+-- Настройки
 local Config = {
-    Fly = false,
-    FlySpeed = 50,
-    WalkSpeed = 16,
-    JumpPower = 50,
-    Noclip = false,
-    ESP = false,
-    FullBright = false,
-    InfiniteJump = false,
+    SpeedEnabled = false,
+    SpeedValue = 40,
+    InfJump = false,
+    NoCoil = false,
     MenuKey = Enum.KeyCode.RightControl
 }
 
--- Утилиты
-local function Notify(title, text)
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = title;
-        Text = text;
-        Duration = 3;
-    })
+-- Создание GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BlazixTower"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+-- Мини-иконка (когда свернуто)
+local MiniIcon = Instance.new("TextButton")
+MiniIcon.Size = UDim2.new(0, 40, 0, 40)
+MiniIcon.Position = UDim2.new(0, 20, 0.5, -20)
+MiniIcon.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+MiniIcon.Text = "B"
+MiniIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+MiniIcon.Visible = false
+MiniIcon.Parent = ScreenGui
+Instance.new("UICorner", MiniIcon).CornerRadius = UDim.new(1, 0)
+
+-- Главное окно
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 400, 0, 300)
+Main.Position = UDim2.new(0.5, -200, 0.5, -150)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Main.Parent = ScreenGui
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+-- Заголовок с кнопками
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+Header.Parent = Main
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0.6, 0, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Text = "BLAZIX HUB | TOWER OF HELL"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Parent = Header
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+MinimizeBtn.Position = UDim2.new(1, -70, 0, 5)
+MinimizeBtn.Text = "-"
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.Parent = Header
+
+-- Вкладки
+local Tabs = Instance.new("Frame")
+Tabs.Size = UDim2.new(0, 100, 1, -40)
+Tabs.Position = UDim2.new(0, 0, 0, 40)
+Tabs.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Tabs.Parent = Main
+
+local MainContainer = Instance.new("Frame")
+MainContainer.Size = UDim2.new(1, -110, 1, -50)
+MainContainer.Position = UDim2.new(0, 105, 0, 45)
+MainContainer.BackgroundTransparency = 1
+MainContainer.Parent = Main
+
+-- Логика переключения вкладок
+local function CreatePage(name)
+    local Page = Instance.new("ScrollingFrame")
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.Visible = false
+    Page.ScrollBarThickness = 2
+    Page.Parent = MainContainer
+    local Layout = Instance.new("UIListLayout", Page)
+    Layout.Padding = UDim.new(0, 5)
+    return Page
 end
 
--- ФУНКЦИИ ЛОГИКИ
-local Connections = {}
+local MainTab = CreatePage("Main")
+local VisualsTab = CreatePage("Visuals")
+MainTab.Visible = true
 
--- 1. Fly System
-local function UpdateFly()
-    if not Config.Fly then return end
-    local char = LocalPlayer.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
+-- Функция создания кнопки (Toggle)
+local function AddToggle(parent, name, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, -5, 0, 35)
+    Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    Btn.Text = name .. ": OFF"
+    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Btn.Font = Enum.Font.Gotham
+    Btn.Parent = parent
     
-    if root and hum then
-        local dir = Vector3.zero
-        local cam = workspace.CurrentCamera.CFrame
-        
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cam.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= cam.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= cam.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += cam.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0, 1, 0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir -= Vector3.new(0, 1, 0) end
-        
-        root.Velocity = dir * Config.FlySpeed
-        hum.PlatformStand = true
-    end
+    local enabled = false
+    Btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        Btn.Text = name .. (enabled and ": ON" or ": OFF")
+        Btn.BackgroundColor3 = enabled and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(40, 40, 50)
+        callback(enabled)
+    end)
+    Instance.new("UICorner", Btn)
 end
 
--- 2. Noclip System (Оптимизированный)
-Connections.Noclip = RunService.Stepped:Connect(function()
-    if Config.Noclip and LocalPlayer.Character then
-        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") and part.CanCollide then
-                part.CanCollide = false
-            end
+-- ФУНКЦИИ
+-- Safe Speed (обход античита)
+RunService.Heartbeat:Connect(function()
+    if Config.SpeedEnabled and LocalPlayer.Character then
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hrp and hum and hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (hum.MoveDirection * (Config.SpeedValue / 100))
         end
     end
 end)
 
--- 3. Speed & Jump Power
-Connections.Mobility = RunService.Heartbeat:Connect(function()
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.WalkSpeed = Config.WalkSpeed
-        hum.JumpPower = Config.JumpPower
-    end
-    UpdateFly()
-end)
-
--- 4. Infinite Jump
+-- Safe Jump
 UserInputService.JumpRequest:Connect(function()
-    if Config.InfiniteJump then
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    if Config.InfJump and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            -- Добавляем крошечную задержку, чтобы античит не видел спам прыжков
+            task.wait(0.1)
+        end
     end
 end)
 
--- ИНТЕРФЕЙС (Modern Dark UI)
-local function CreateModernUI()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "BlazixModern"
-    ScreenGui.Parent = CoreGui
-    ScreenGui.ResetOnSpawn = false
+-- Наполнение вкладок
+AddToggle(MainTab, "⚡ Safe Speed", function(v) Config.SpeedEnabled = v end)
+AddToggle(MainTab, "🔄 Safe InfJump", function(v) Config.InfJump = v end)
+AddToggle(MainTab, "🛡️ GodMode (Anti-Lava)", function(v)
+    -- В ToH GodMode часто палится, лучше просто удалять скрипт смерти
+    local kill = LocalPlayer.Character:FindFirstChild("KillScript") or LocalPlayer.Character:FindFirstChild("death")
+    if v and kill then kill.Disabled = true end
+end)
 
-    local Main = Instance.new("Frame")
-    Main.Name = "Main"
-    Main.Size = UDim2.new(0, 280, 0, 380)
-    Main.Position = UDim2.new(0.5, -140, 0.5, -190)
-    Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-    Main.BorderSizePixel = 0
-    Main.Parent = ScreenGui
-    Main.ClipsDescendants = true
-
-    local Corner = Instance.new("UICorner", Main)
-    Corner.CornerRadius = UDim.new(0, 10)
-
-    local Header = Instance.new("Frame")
-    Header.Size = UDim2.new(1, 0, 0, 40)
-    Header.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    Header.Parent = Main
-
-    local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, -10, 1, 0)
-    Title.Position = UDim2.new(0, 10, 0, 0)
-    Title.BackgroundTransparency = 1
-    Title.Text = "BLAZIX HUB v2"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 16
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.Parent = Header
-
-    local Container = Instance.new("ScrollingFrame")
-    Container.Size = UDim2.new(1, -20, 1, -50)
-    Container.Position = UDim2.new(0, 10, 0, 50)
-    Container.BackgroundTransparency = 1
-    Container.ScrollBarThickness = 2
-    Container.Parent = Main
-    
-    local UIListLayout = Instance.new("UIListLayout", Container)
-    UIListLayout.Padding = UDim.new(0, 5)
-
-    -- Функция создания кнопки-переключателя
-    local function AddToggle(name, callback)
-        local Btn = Instance.new("TextButton")
-        Btn.Size = UDim2.new(1, -5, 0, 35)
-        Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-        Btn.Text = name .. ": OFF"
-        Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-        Btn.Font = Enum.Font.Gotham
-        Btn.TextSize = 14
-        Btn.Parent = Container
-
-        local tgl = false
-        Btn.MouseButton1Click:Connect(function()
-            tgl = not tgl
-            Btn.Text = name .. (tgl and ": ON" or ": OFF")
-            Btn.BackgroundColor3 = tgl and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(45, 45, 55)
-            callback(tgl)
-        end)
-        Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+AddToggle(VisualsTab, "🎯 Player ESP", function(v)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local high = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
+            high.Enabled = v
+        end
     end
+end)
 
-    -- Наполнение функциями
-    AddToggle("🕊️ Fly Mode", function(v) 
-        Config.Fly = v 
-        if not v and LocalPlayer.Character then
-            local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then hum.PlatformStand = false end
-        end
-    end)
-    
-    AddToggle("⚡ Speed (100)", function(v) Config.WalkSpeed = v and 100 or 16 end)
-    AddToggle("🦘 High Jump", function(v) Config.JumpPower = v and 150 or 50 end)
-    AddToggle("🔄 Infinite Jump", function(v) Config.InfiniteJump = v end)
-    AddToggle("👻 Noclip", function(v) Config.Noclip = v end)
-    
-    AddToggle("💡 FullBright", function(v)
-        if v then
-            Lighting.Ambient = Color3.new(1,1,1)
-            Lighting.Brightness = 2
-        else
-            Lighting.Ambient = Color3.new(0.5,0.5,0.5)
-            Lighting.Brightness = 1
-        end
-    end)
+-- Управление окном
+MinimizeBtn.MouseButton1Click:Connect(function()
+    Main.Visible = false
+    MiniIcon.Visible = true
+end)
 
-    -- Сворачивание меню
-    UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Config.MenuKey then
-            Main.Visible = not Main.Visible
-        end
-    end)
+MiniIcon.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    MiniIcon.Visible = false
+end)
 
-    -- Dragging (Перетаскивание)
-    local dragStart, startPos
-    Header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragStart = input.Position
-            startPos = Main.Position
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragStart then
-            local delta = input.Position - dragStart
-            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragStart = nil end
-    end)
-end
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
 
--- Запуск
-CreateModernUI()
-Notify("Blazix Hub", "Загружено! Нажми RightControl чтобы скрыть.")
+-- Кнопки вкладок
+local btnMain = Instance.new("TextButton", Tabs)
+btnMain.Size = UDim2.new(1, 0, 0, 30)
+btnMain.Text = "Main"
+btnMain.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+btnMain.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+local btnVis = Instance.new("TextButton", Tabs)
+btnVis.Size = UDim2.new(1, 0, 0, 30)
+btnVis.Position = UDim2.new(0, 0, 0, 35)
+btnVis.Text = "Visuals"
+btnVis.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+btnVis.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+btnMain.MouseButton1Click:Connect(function()
+    MainTab.Visible = true
+    VisualsTab.Visible = false
+end)
+
+btnVis.MouseButton1Click:Connect(function()
+    MainTab.Visible = false
+    VisualsTab.Visible = true
+end)
+
+-- Dragging
+local dragStart, startPos
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragStart = input.Position
+        startPos = Main.Position
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement and dragStart then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragStart = nil end
+end)
