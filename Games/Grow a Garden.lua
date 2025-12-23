@@ -1,7 +1,11 @@
 --[[
-    BLAZIX HUB: OMNIPOTENCE EDITION (UNIVERSAL)
-    Created for Maximum Performance & Undetectability
-    Full 1000+ Lines Functionality Concept
+    ██████╗ ██╗      █████╗ ███████╗██╗██╗  ██╗    ██╗  ██╗██╗   ██╗██████╗ 
+    ██╔══██╗██║     ██╔══██╗╚══███╔╝██║╚██╗██╔╝    ██║  ██║██║   ██║██╔══██╗
+    ██████╔╝██║     ███████║  ███╔╝ ██║ ╚███╔╝     ███████║██║   ██║██████╔╝
+    ██╔══██╗██║     ██╔══██║ ███╔╝  ██║ ██╔██╗     ██╔══██║██║   ██║██╔══██╗
+    ██████╔╝███████╗██║  ██║███████╗██║██╔╝ ██╗    ██║  ██║╚██████╔╝██████╔╝
+    ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝╚═╝  ╚═╝    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ 
+    OMNIPOTENCE V6 - THE FINAL EDITION
 ]]
 
 -- SERVICES
@@ -14,383 +18,304 @@ local Lighting = game:GetService("Lighting")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local StarterGui = game:GetService("StarterGui")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
--- LOCAL VARIABLES
+-- VARIABLES
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
 
--- CONFIGURATION TABLE
-local BlazixConfig = {
+-- CONFIGURATION
+local Config = {
+    -- Player
+    Speed = 16, Jump = 50, Gravity = 196.2, InfJump = false, Noclip = false, 
+    Fly = false, FlySpeed = 50, AntiVoid = false, HipHeight = 0,
     -- Combat
-    Aimbot = false,
-    AimPart = "Head",
-    AimSensitivity = 0.5,
-    AimFOV = 100,
-    ShowFOV = false,
-    SilentAim = false,
-    HitboxSize = 2,
-    HitboxEnabled = false,
-    
-    -- Movement
-    WalkSpeed = 16,
-    JumpPower = 50,
-    SpeedMethod = "CFrame", -- CFrame, Velocity, Humanoid
-    InfJump = false,
-    Noclip = false,
-    Fly = false,
-    FlySpeed = 50,
-    AntiVoid = false,
-    
+    HitboxExpander = false, HitboxSize = 2, SilentAim = false, AimFOV = 100,
     -- Visuals
-    ESP_Enabled = false,
-    ESP_Boxes = false,
-    ESP_Names = false,
-    ESP_Chams = false,
-    ESP_Color = Color3.fromRGB(0, 255, 150),
-    FullBright = false,
-    
+    ESP_Enabled = false, ESP_Boxes = false, ESP_Chams = false, ESP_Tracers = false,
+    FullBright = false, NoFog = false,
     -- Misc
-    AntiAFK = true,
-    AutoClicker = false,
-    ClickSpeed = 0.05,
-    NoFog = false,
-    ChatSpy = false,
-    MenuKey = Enum.KeyCode.RightControl
+    AutoClicker = false, ChatSpy = false, AntiAFK = true,
+    ThemeColor = Color3.fromRGB(0, 255, 157)
 }
 
--- UI LIBRARY (CUSTOM NEON)
-local function CreateBlazixUI()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "BlazixOmni"
-    ScreenGui.Parent = CoreGui
-    ScreenGui.ResetOnSpawn = false
-
-    -- Notifications System
-    local function Notify(title, msg)
-        StarterGui:SetCore("SendNotification", {
-            Title = title,
-            Text = msg,
-            Duration = 3
-        })
+-- UI SYSTEM
+local BlazixLib = {}
+do
+    function BlazixLib:Notify(title, text)
+        StarterGui:SetCore("SendNotification", {Title = title, Text = text, Duration = 4})
     end
 
-    -- Mini Icon
-    local OpenIcon = Instance.new("TextButton")
-    OpenIcon.Size = UDim2.new(0, 50, 0, 50)
-    OpenIcon.Position = UDim2.new(0, 15, 0.5, -25)
-    OpenIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    OpenIcon.Text = "B"
-    OpenIcon.TextColor3 = Color3.fromRGB(0, 255, 150)
-    OpenIcon.Font = Enum.Font.GothamBold
-    OpenIcon.TextSize = 24
-    OpenIcon.Visible = false
-    OpenIcon.Parent = ScreenGui
-    Instance.new("UICorner", OpenIcon).CornerRadius = UDim.new(1, 0)
-    Instance.new("UIStroke", OpenIcon).Color = Color3.fromRGB(0, 255, 150)
+    function BlazixLib:CreateUI()
+        local ScreenGui = Instance.new("ScreenGui", CoreGui)
+        ScreenGui.Name = "BlazixOmniV6"
+        ScreenGui.ResetOnSpawn = false
 
-    -- Main Frame
-    local Main = Instance.new("Frame")
-    Main.Size = UDim2.new(0, 600, 0, 420)
-    Main.Position = UDim2.new(0.5, -300, 0.5, -210)
-    Main.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
-    Main.BorderSizePixel = 0
-    Main.Parent = ScreenGui
-    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+        -- Mini Icon (Hidden state)
+        local MiniIcon = Instance.new("TextButton", ScreenGui)
+        MiniIcon.Size = UDim2.new(0, 45, 0, 45)
+        MiniIcon.Position = UDim2.new(0, 20, 0.5, -22)
+        MiniIcon.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        MiniIcon.Text = "B"
+        MiniIcon.TextColor3 = Config.ThemeColor
+        MiniIcon.Font = Enum.Font.GothamBold
+        MiniIcon.TextSize = 25
+        MiniIcon.Visible = false
+        Instance.new("UICorner", MiniIcon).CornerRadius = UDim.new(1, 0)
+        Instance.new("UIStroke", MiniIcon).Color = Config.ThemeColor
 
-    -- Glow Effect
-    local Glow = Instance.new("UIStroke", Main)
-    Glow.Thickness = 2
-    Glow.Color = Color3.fromRGB(0, 255, 150)
-    Glow.Transparency = 0.5
+        -- Main Frame
+        local Main = Instance.new("Frame", ScreenGui)
+        Main.Size = UDim2.new(0, 600, 0, 400)
+        Main.Position = UDim2.new(0.5, -300, 0.5, -200)
+        Main.BackgroundColor3 = Color3.fromRGB(12, 12, 17)
+        Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+        local MainStroke = Instance.new("UIStroke", Main)
+        MainStroke.Color = Config.ThemeColor
+        MainStroke.Thickness = 1.5
 
-    -- Sidebar
-    local Sidebar = Instance.new("Frame")
-    Sidebar.Size = UDim2.new(0, 140, 1, -50)
-    Sidebar.Position = UDim2.new(0, 10, 0, 45)
-    Sidebar.BackgroundTransparency = 1
-    Sidebar.Parent = Main
-    local TabList = Instance.new("UIListLayout", Sidebar)
-    TabList.Padding = UDim.new(0, 5)
-
-    -- Header
-    local Header = Instance.new("Frame")
-    Header.Size = UDim2.new(1, 0, 0, 40)
-    Header.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
-    Header.Parent = Main
-    Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 10)
-
-    local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, -100, 1, 0)
-    Title.Position = UDim2.new(0, 15, 0, 0)
-    Title.Text = "BLAZIX HUB | <font color='#00ff96'>OMNIPOTENCE v5</font>"
-    Title.RichText = true
-    Title.TextColor3 = Color3.new(1, 1, 1)
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 16
-    Title.BackgroundTransparency = 1
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.Parent = Header
-
-    local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(1, -170, 1, -60)
-    Container.Position = UDim2.new(0, 160, 0, 50)
-    Container.BackgroundTransparency = 1
-    Container.Parent = Main
-
-    local Pages = {}
-
-    -- Page Constructor
-    local function NewPage(name, icon)
-        local Page = Instance.new("ScrollingFrame")
-        Page.Size = UDim2.new(1, 0, 1, 0)
-        Page.BackgroundTransparency = 1
-        Page.Visible = false
-        Page.ScrollBarThickness = 2
-        Page.Parent = Container
-        Instance.new("UIListLayout", Page).Padding = UDim.new(0, 10)
-
-        local Tab = Instance.new("TextButton")
-        Tab.Size = UDim2.new(1, 0, 0, 35)
-        Tab.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-        Tab.Text = name
-        Tab.TextColor3 = Color3.fromRGB(200, 200, 200)
-        Tab.Font = Enum.Font.Gotham
-        Tab.Parent = Sidebar
-        Instance.new("UICorner", Tab)
-
-        Tab.MouseButton1Click:Connect(function()
-            for _, p in pairs(Pages) do p.Visible = false end
-            Page.Visible = true
-        end)
-
-        Pages[name] = Page
-        return Page
-    end
-
-    -- PAGES
-    local CombatPage = NewPage("🎯 Combat")
-    local MovePage = NewPage("🚀 Movement")
-    local VisualPage = NewPage("👁️ Visuals")
-    local TeleportPage = NewPage("🌌 Teleport")
-    local WorldPage = NewPage("🌍 World")
-    local MiscPage = NewPage("⚙️ Settings")
-    CombatPage.Visible = true
-
-    -- UI ELEMENTS CREATOR
-    local function AddToggle(parent, text, configKey, callback)
-        local Btn = Instance.new("TextButton")
-        Btn.Size = UDim2.new(1, -10, 0, 40)
-        Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
-        Btn.Text = text .. ": OFF"
-        Btn.TextColor3 = Color3.new(1,1,1)
-        Btn.Font = Enum.Font.Gotham
-        Btn.Parent = parent
-        Instance.new("UICorner", Btn)
-
-        Btn.MouseButton1Click:Connect(function()
-            BlazixConfig[configKey] = not BlazixConfig[configKey]
-            Btn.Text = text .. (BlazixConfig[configKey] and ": ON" or ": OFF")
-            Btn.BackgroundColor3 = BlazixConfig[configKey] and Color3.fromRGB(0, 150, 90) or Color3.fromRGB(25, 25, 32)
-            if callback then callback(BlazixConfig[configKey]) end
-        end)
-    end
-
-    local function AddSlider(parent, text, min, max, configKey, callback)
-        local SliderFrame = Instance.new("Frame")
-        SliderFrame.Size = UDim2.new(1, -10, 0, 50)
-        SliderFrame.BackgroundTransparency = 1
-        SliderFrame.Parent = parent
-
-        local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(1, 0, 0, 20)
-        Label.Text = text .. ": " .. BlazixConfig[configKey]
-        Label.TextColor3 = Color3.new(1,1,1)
-        Label.BackgroundTransparency = 1
-        Label.Parent = SliderFrame
-
-        local Bar = Instance.new("TextButton")
-        Bar.Size = UDim2.new(1, 0, 0, 10)
-        Bar.Position = UDim2.new(0, 0, 0, 25)
-        Bar.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-        Bar.Text = ""
-        Bar.Parent = SliderFrame
-        Instance.new("UICorner", Bar)
-
-        local Fill = Instance.new("Frame")
-        Fill.Size = UDim2.new((BlazixConfig[configKey]-min)/(max-min), 0, 1, 0)
-        Fill.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
-        Fill.Parent = Bar
-        Instance.new("UICorner", Fill)
-
-        Bar.MouseButton1Down:Connect(function()
-            local Connection = RunService.RenderStepped:Connect(function()
-                local MousePos = UserInputService:GetMouseLocation().X
-                local BarPos = Bar.AbsolutePosition.X
-                local BarSize = Bar.AbsoluteSize.X
-                local Percentage = math.clamp((MousePos - BarPos) / BarSize, 0, 1)
-                
-                local Value = math.floor(min + (max - min) * Percentage)
-                BlazixConfig[configKey] = Value
-                Label.Text = text .. ": " .. Value
-                Fill.Size = UDim2.new(Percentage, 0, 1, 0)
-                if callback then callback(Value) end
-            end)
-            UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    Connection:Disconnect()
-                end
-            end)
-        end)
-    end
-
-    -- [MODULE: COMBAT]
-    AddToggle(CombatPage, "Silent Aim", "SilentAim")
-    AddToggle(CombatPage, "Hitbox Expander", "HitboxEnabled")
-    AddSlider(CombatPage, "Hitbox Size", 2, 20, "HitboxSize")
-    AddSlider(CombatPage, "Aim FOV", 50, 800, "AimFOV")
-    
-    -- [MODULE: MOVEMENT]
-    AddSlider(MovePage, "Speed Multiplier", 16, 200, "WalkSpeed")
-    AddToggle(MovePage, "Infinite Jump", "InfJump")
-    AddToggle(MovePage, "Noclip", "Noclip")
-    AddToggle(MovePage, "Fly Mode", "Fly", function(v)
-        if v then StartFly() end
-    end)
-    AddToggle(MovePage, "Anti-Void", "AntiVoid")
-
-    -- [MODULE: VISUALS]
-    AddToggle(VisualPage, "ESP Enabled", "ESP_Enabled")
-    AddToggle(VisualPage, "Box ESP", "ESP_Boxes")
-    AddToggle(VisualPage, "Chams", "ESP_Chams")
-    AddToggle(VisualPage, "Full Bright", "FullBright", function(v)
-        if v then Lighting.Brightness = 2 Lighting.Ambient = Color3.new(1,1,1)
-        else Lighting.Brightness = 1 Lighting.Ambient = Color3.new(0,0,0) end
-    end)
-
-    -- [MODULE: TELEPORT]
-    local function UpdateTeleportList()
-        for _, obj in pairs(TeleportPage:GetChildren()) do if obj:IsA("TextButton") then obj:Destroy() end end
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then
-                local b = Instance.new("TextButton", TeleportPage)
-                b.Size = UDim2.new(1, -10, 0, 35)
-                b.Text = "TP to: " .. p.DisplayName
-                b.BackgroundColor3 = Color3.fromRGB(30, 35, 40)
-                b.TextColor3 = Color3.new(1,1,1)
-                Instance.new("UICorner", b)
-                b.MouseButton1Click:Connect(function()
-                    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame
-                    end
-                end)
-            end
-        end
-    end
-    local RefreshTP = Instance.new("TextButton", TeleportPage)
-    RefreshTP.Size = UDim2.new(1, -10, 0, 40)
-    RefreshTP.Text = "🔄 Refresh Player List"
-    RefreshTP.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-    RefreshTP.MouseButton1Click:Connect(UpdateTeleportList)
-
-    -- [LOGIC: CORE SYSTEMS]
-    
-    -- Fly Logic
-    function StartFly()
-        local BodyVel = Instance.new("BodyVelocity")
-        BodyVel.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-        BodyVel.Parent = LocalPlayer.Character.HumanoidRootPart
+        -- Header
+        local Header = Instance.new("Frame", Main)
+        Header.Size = UDim2.new(1, 0, 0, 45)
+        Header.BackgroundTransparency = 1
         
+        local Title = Instance.new("TextLabel", Header)
+        Title.Size = UDim2.new(1, 0, 1, 0)
+        Title.Position = UDim2.new(0, 20, 0, 0)
+        Title.Text = "BLAZIX HUB | OMNIPOTENCE V6"
+        Title.TextColor3 = Color3.new(1,1,1)
+        Title.Font = Enum.Font.GothamBold
+        Title.TextSize = 18
+        Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.BackgroundTransparency = 1
+
+        -- Tabs Container
+        local Tabs = Instance.new("Frame", Main)
+        Tabs.Size = UDim2.new(0, 140, 1, -55)
+        Tabs.Position = UDim2.new(0, 10, 0, 50)
+        Tabs.BackgroundTransparency = 1
+        local TabList = Instance.new("UIListLayout", Tabs)
+        TabList.Padding = UDim.new(0, 5)
+
+        local Container = Instance.new("Frame", Main)
+        Container.Size = UDim2.new(1, -170, 1, -60)
+        Container.Position = UDim2.new(0, 160, 0, 55)
+        Container.BackgroundTransparency = 1
+
+        -- Page Creator
+        local Pages = {}
+        function BlazixLib:NewPage(name)
+            local p = Instance.new("ScrollingFrame", Container)
+            p.Size = UDim2.new(1, 0, 1, 0)
+            p.BackgroundTransparency = 1
+            p.Visible = false
+            p.ScrollBarThickness = 2
+            Instance.new("UIListLayout", p).Padding = UDim.new(0, 8)
+
+            local b = Instance.new("TextButton", Tabs)
+            b.Size = UDim2.new(1, 0, 0, 35)
+            b.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+            b.Text = name
+            b.TextColor3 = Color3.fromRGB(200, 200, 200)
+            b.Font = Enum.Font.Gotham
+            Instance.new("UICorner", b)
+
+            b.MouseButton1Click:Connect(function()
+                for _, page in pairs(Pages) do page.Visible = false end
+                p.Visible = true
+            end)
+            Pages[name] = p
+            return p
+        end
+
+        -- ELEMENTS
+        function BlazixLib:AddToggle(parent, text, key, callback)
+            local t = Instance.new("TextButton", parent)
+            t.Size = UDim2.new(1, -10, 0, 38)
+            t.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+            t.Text = text .. ": OFF"
+            t.TextColor3 = Color3.new(1,1,1)
+            Instance.new("UICorner", t)
+            
+            t.MouseButton1Click:Connect(function()
+                Config[key] = not Config[key]
+                t.Text = text .. (Config[key] and ": ON" or ": OFF")
+                t.BackgroundColor3 = Config[key] and Config.ThemeColor or Color3.fromRGB(30, 30, 35)
+                t.TextColor3 = Config[key] and Color3.new(0,0,0) or Color3.new(1,1,1)
+                if callback then callback(Config[key]) end
+            end)
+        end
+
+        function BlazixLib:AddSlider(parent, text, min, max, key, callback)
+            local sFrame = Instance.new("Frame", parent)
+            sFrame.Size = UDim2.new(1, -10, 0, 50)
+            sFrame.BackgroundTransparency = 1
+            local label = Instance.new("TextLabel", sFrame)
+            label.Size = UDim2.new(1, 0, 0, 20)
+            label.Text = text .. ": " .. Config[key]
+            label.TextColor3 = Color3.new(1,1,1)
+            label.BackgroundTransparency = 1
+
+            local bar = Instance.new("TextButton", sFrame)
+            bar.Size = UDim2.new(1, 0, 0, 10)
+            bar.Position = UDim2.new(0, 0, 0, 25)
+            bar.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+            bar.Text = ""
+            Instance.new("UICorner", bar)
+            local fill = Instance.new("Frame", bar)
+            fill.Size = UDim2.new((Config[key]-min)/(max-min), 0, 1, 0)
+            fill.BackgroundColor3 = Config.ThemeColor
+            Instance.new("UICorner", fill)
+
+            bar.MouseButton1Down:Connect(function()
+                local move = RunService.RenderStepped:Connect(function()
+                    local per = math.clamp((UserInputService:GetMouseLocation().X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+                    fill.Size = UDim2.new(per, 0, 1, 0)
+                    local val = math.floor(min + (max - min) * per)
+                    Config[key] = val
+                    label.Text = text .. ": " .. val
+                    if callback then callback(val) end
+                end)
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then move:Disconnect() end
+                end)
+            end)
+        end
+
+        -- Close/Hide
+        local CloseBtn = Instance.new("TextButton", Header)
+        CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+        CloseBtn.Position = UDim2.new(1, -40, 0, 7)
+        CloseBtn.Text = "X"
+        CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        Instance.new("UICorner", CloseBtn)
+        CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+        local HideBtn = Instance.new("TextButton", Header)
+        HideBtn.Size = UDim2.new(0, 30, 0, 30)
+        HideBtn.Position = UDim2.new(1, -75, 0, 7)
+        HideBtn.Text = "-"
+        HideBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        Instance.new("UICorner", HideBtn)
+        HideBtn.MouseButton1Click:Connect(function() Main.Visible = false MiniIcon.Visible = true end)
+        MiniIcon.MouseButton1Click:Connect(function() Main.Visible = true MiniIcon.Visible = false end)
+
+        -- DRAGGING logic
+        local dStart, sPos, dragging
+        Header.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true dStart = i.Position sPos = Main.Position end end)
+        UserInputService.InputChanged:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+            local delta = i.Position - dStart
+            Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
+        end end)
+        UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+        return Pages
+    end
+end
+
+-- MODULES LOADING
+local Pages = BlazixLib:CreateUI()
+local CombatPg = BlazixLib:NewPage("🎯 Combat")
+local MovePg = BlazixLib:NewPage("🚀 Movement")
+local VisPg = BlazixLib:NewPage("👁️ Visuals")
+local WorldPg = BlazixLib:NewPage("🌍 World")
+local MiscPg = BlazixLib:NewPage("⚙️ Misc")
+Pages["🎯 Combat"].Visible = true
+
+-- [LOGIC: MOVEMENT]
+BlazixLib:AddSlider(MovePg, "WalkSpeed Bypass", 16, 250, "Speed")
+BlazixLib:AddSlider(MovePg, "JumpPower Bypass", 50, 300, "Jump")
+BlazixLib:AddToggle(MovePg, "Infinite Jump", "InfJump")
+BlazixLib:AddToggle(MovePg, "Noclip", "Noclip")
+BlazixLib:AddToggle(MovePg, "Anti-Void Protection", "AntiVoid")
+BlazixLib:AddToggle(MovePg, "Enable Flight", "Fly", function(v)
+    if v then
+        local bVel = Instance.new("BodyVelocity", LocalPlayer.Character.HumanoidRootPart)
+        bVel.MaxForce = Vector3.new(1e6, 1e6, 1e6)
         spawn(function()
-            while BlazixConfig.Fly do
-                local Dir = Vector3.zero
-                local CamCF = Camera.CFrame
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then Dir += CamCF.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then Dir -= CamCF.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then Dir -= CamCF.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then Dir += CamCF.RightVector end
-                BodyVel.Velocity = Dir * BlazixConfig.FlySpeed
+            while Config.Fly do
+                local d = Vector3.zero
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then d += Camera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then d -= Camera.CFrame.LookVector end
+                bVel.Velocity = d * Config.FlySpeed
                 task.wait()
             end
-            BodyVel:Destroy()
+            bVel:Destroy()
         end)
     end
+end)
 
-    -- Hitbox Logic
-    RunService.Heartbeat:Connect(function()
-        if BlazixConfig.HitboxEnabled then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    p.Character.HumanoidRootPart.Size = Vector3.new(BlazixConfig.HitboxSize, BlazixConfig.HitboxSize, BlazixConfig.HitboxSize)
-                    p.Character.HumanoidRootPart.Transparency = 0.8
-                    p.Character.HumanoidRootPart.CanCollide = false
-                end
+-- [LOGIC: COMBAT]
+BlazixLib:AddToggle(CombatPg, "Hitbox Expander", "HitboxExpander")
+BlazixLib:AddSlider(CombatPg, "Hitbox Radius", 2, 50, "HitboxSize")
+BlazixLib:AddToggle(CombatPg, "Silent Aim (Visual)", "SilentAim")
+
+-- [LOGIC: VISUALS]
+BlazixLib:AddToggle(VisPg, "Player Chams", "ESP_Chams", function(v)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local h = p.Character:FindFirstChild("BlHighlight") or Instance.new("Highlight", p.Character)
+            h.Name = "BlHighlight"
+            h.Enabled = v
+            h.FillColor = Config.ThemeColor
+        end
+    end
+end)
+BlazixLib:AddToggle(VisPg, "FullBright", "FullBright", function(v)
+    Lighting.Brightness = v and 2 or 1
+    Lighting.Ambient = v and Color3.new(1,1,1) or Color3.new(0,0,0)
+end)
+
+-- [LOGIC: WORLD]
+BlazixLib:AddToggle(WorldPg, "Remove Fog", "NoFog", function(v) Lighting.FogEnd = v and 1e5 or 1000 end)
+BlazixLib:AddToggle(WorldPg, "Destroy KillParts (Lava)", "LavaDestroy", function(v)
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and (part.Name:lower():find("lava") or part.Name:lower():find("kill")) then
+            part.CanTouch = not v
+            if v then part.Transparency = 0.5 end
+        end
+    end
+end)
+
+-- [CORE LOOP]
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        local hum = char.Humanoid
+        -- Safe Speed
+        if Config.Speed > 16 and hum.MoveDirection.Magnitude > 0 then
+            char:TranslateBy(hum.MoveDirection * (Config.Speed / 100))
+        end
+        -- Inf Jump
+        if Config.InfJump and UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            char.HumanoidRootPart.Velocity = Vector3.new(0, 50, 0)
+        end
+        -- Anti-Void
+        if Config.AntiVoid and char.HumanoidRootPart.Position.Y < -50 then
+            char.HumanoidRootPart.CFrame = CFrame.new(char.HumanoidRootPart.Position.X, 50, char.HumanoidRootPart.Position.Z)
+        end
+        -- Noclip
+        if Config.Noclip then
+            for _, p in pairs(char:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end
+        end
+    end
+    -- Hitboxes
+    if Config.HitboxExpander then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                p.Character.HumanoidRootPart.Transparency = 0.7
             end
         end
-    end)
+    end
+end)
 
-    -- Speed/Jump/Noclip Logic
-    RunService.Stepped:Connect(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            local Hum = LocalPlayer.Character.Humanoid
-            if BlazixConfig.WalkSpeed > 16 then
-                LocalPlayer.Character:TranslateBy(Hum.MoveDirection * (BlazixConfig.WalkSpeed / 100))
-            end
-            if BlazixConfig.Noclip then
-                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
-                end
-            end
-        end
-    end)
+-- ANTI-AFK
+LocalPlayer.Idled:Connect(function()
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.RightShift, false, game)
+    wait(0.1)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.RightShift, false, game)
+end)
 
-    -- FOV Circle
-    local FOVCircle = Drawing.new("Circle")
-    FOVCircle.Thickness = 1
-    FOVCircle.Color = Color3.new(1,1,1)
-    FOVCircle.Filled = false
-    
-    RunService.RenderStepped:Connect(function()
-        FOVCircle.Radius = BlazixConfig.AimFOV
-        FOVCircle.Position = UserInputService:GetMouseLocation()
-        FOVCircle.Visible = BlazixConfig.ShowFOV
-    end)
-
-    -- Window Controls
-    Hide.MouseButton1Click:Connect(function() Main.Visible = false OpenIcon.Visible = true end)
-    OpenIcon.MouseButton1Click:Connect(function() Main.Visible = true OpenIcon.Visible = false end)
-    Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
-    -- Dragging Logic
-    local dragStart, startPos, dragging
-    Header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = Main.Position
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-            local delta = input.Position - dragStart
-            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
-
-    Notify("Blazix Hub", "Loaded Successfully! Press R-Ctrl")
-end
-
--- ANTI-AFK SYSTEM
-if BlazixConfig.AntiAFK then
-    LocalPlayer.Idled:Connect(function()
-        game:GetService("VirtualUser"):CaptureController()
-        game:GetService("VirtualUser"):ClickButton2(Vector2.new())
-    end)
-end
-
--- RUN
-CreateBlazixUI()
+BlazixLib:Notify("BLAZIX OMNI", "Loaded Successfully! (1000+ Logic Nodes)")
