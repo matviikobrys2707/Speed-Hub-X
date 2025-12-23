@@ -1,485 +1,268 @@
 --[[
-    BLAZIX HUB V8 - THE BEHEMOTH BUILD
-    UNIVERSAL EXPLOIT SYSTEM
-    STRICTLY FUNCTIONAL - NO FILLER
+    BLAZIX OMNI V9 - TITANIC EDITION
+    UI/UX REVOLUTION 2025
+    STRICTLY FOR HIGH-END EXECUTORS
 ]]
 
--- [ ИНИЦИАЛИЗАЦИЯ СЕРВИСОВ ]
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
-local HttpService = game:GetService("HttpService")
-local StarterGui = game:GetService("StarterGui")
-local Debris = game:GetService("Debris")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Stats = game:GetService("Stats")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
--- [ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ]
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-local Mouse = LocalPlayer:GetMouse()
-local TargetPlayer = nil
 
--- [ ТАБЛИЦА КОНФИГУРАЦИИ (РАСШИРЕННАЯ) ]
-local Config = {
-    -- Player Settings
-    Speed = 16,
-    Jump = 50,
-    Gravity = 196.2,
-    InfJump = false,
-    Noclip = false,
-    Fly = false,
-    FlySpeed = 50,
-    AntiVoid = false,
-    VoidY = -50,
-    SwimInAir = false,
-    AutoRespawn = false,
-    NoSlowdown = false,
-    InfiniteStamina = false,
-    
-    -- Combat Settings
-    AimbotEnabled = false,
-    SilentAim = false,
-    AimPart = "Head",
-    AimFOV = 100,
-    FOVVisible = false,
-    AimSmoothing = 1,
-    PredictMovement = false,
-    WallCheck = false,
-    HitboxExpander = false,
-    HitboxSize = 2,
-    HitboxTransparency = 0.7,
-    TriggerBot = false,
-    TeamCheck = false,
-    
-    -- ESP Settings
-    ESP_Enabled = false,
-    ESP_Box = false,
-    ESP_Name = false,
-    ESP_Distance = false,
-    ESP_Tracer = false,
-    ESP_Skeleton = false,
-    ESP_Health = false,
-    ESP_Chams = false,
-    ESP_Color = Color3.fromRGB(0, 255, 150),
-    
-    -- World Settings
-    FullBright = false,
-    NoFog = false,
-    DayTime = false,
-    NightTime = false,
-    RemoveLava = false,
-    FPSBoost = false,
-    KillAllParts = false,
-    GravityForce = 196.2,
-    
-    -- Misc Settings
-    AutoClicker = false,
-    ClickDelay = 0.05,
-    ChatSpy = false,
-    AntiAFK = true,
-    RejoinOnKick = false,
-    ServerHop = false,
-    SpectatePlayer = false,
-    JoinDiscord = false,
-    RainbowUI = false
+-- ЦВЕТОВАЯ ПАЛИТРА (NEON NIGHT)
+local Theme = {
+    Main = Color3.fromRGB(10, 10, 15),
+    Accent = Color3.fromRGB(0, 255, 150),
+    Text = Color3.fromRGB(255, 255, 255),
+    DarkText = Color3.fromRGB(150, 150, 150),
+    Element = Color3.fromRGB(20, 20, 25)
 }
 
--- [ СИСТЕМА ESP НА DRAWING API ]
-local ESP_Objects = {}
+-- CONFIG
+local Config = {
+    Speed = 16, Jump = 50, FlySpeed = 50,
+    HitboxSize = 2, ESP_Enabled = false,
+    Fly = false, Noclip = false, AntiVoid = false
+}
 
-local function CreateESP(Player)
-    local Box = Drawing.new("Square")
-    local Name = Drawing.new("Text")
-    local Distance = Drawing.new("Text")
-    local Tracer = Drawing.new("Line")
-    local HealthBar = Drawing.new("Line")
-
-    ESP_Objects[Player] = {
-        Box = Box,
-        Name = Name,
-        Distance = Distance,
-        Tracer = Tracer,
-        HealthBar = HealthBar
-    }
-
-    local function Update()
-        local Connection
-        Connection = RunService.RenderStepped:Connect(function()
-            if not Player or not Player.Parent or not Player.Character or not Config.ESP_Enabled then
-                Box.Visible = false
-                Name.Visible = false
-                Distance.Visible = false
-                Tracer.Visible = false
-                HealthBar.Visible = false
-                if not Player.Parent then Connection:Disconnect() end
-                return
-            end
-
-            local Root = Player.Character:FindFirstChild("HumanoidRootPart")
-            local Hum = Player.Character:FindFirstChildOfClass("Humanoid")
-            if not Root or not Hum then return end
-
-            local Pos, OnScreen = Camera:WorldToViewportPoint(Root.Position)
-            if OnScreen then
-                if Config.ESP_Box then
-                    Box.Size = Vector2.new(2000 / Pos.Z, 3000 / Pos.Z)
-                    Box.Position = Vector2.new(Pos.X - Box.Size.X / 2, Pos.Y - Box.Size.Y / 2)
-                    Box.Color = Config.ESP_Color
-                    Box.Thickness = 1
-                    Box.Visible = true
-                else Box.Visible = false end
-
-                if Config.ESP_Name then
-                    Name.Text = Player.Name
-                    Name.Position = Vector2.new(Pos.X, Pos.Y - (Box.Size.Y / 2) - 15)
-                    Name.Center = true
-                    Name.Outline = true
-                    Name.Visible = true
-                else Name.Visible = false end
-
-                if Config.ESP_Tracer then
-                    Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                    Tracer.To = Vector2.new(Pos.X, Pos.Y)
-                    Tracer.Color = Config.ESP_Color
-                    Tracer.Visible = true
-                else Tracer.Visible = false end
-            else
-                Box.Visible = false
-                Name.Visible = false
-                Tracer.Visible = false
-            end
-        end)
-    end
-    Update()
-end
-
--- [ СИСТЕМА AIMBOT ]
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1
-FOVCircle.NumSides = 100
-FOVCircle.Radius = Config.AimFOV
-FOVCircle.Filled = false
-FOVCircle.Visible = false
-FOVCircle.Color = Color3.fromRGB(255, 255, 255)
-
-local function GetClosestPlayer()
-    local Closest = nil
-    local MaxDist = Config.AimFOV
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(Config.AimPart) then
-            if Config.TeamCheck and v.Team == LocalPlayer.Team then continue end
-            local Pos, OnScreen = Camera:WorldToViewportPoint(v.Character[Config.AimPart].Position)
-            local Dist = (Vector2.new(Pos.X, Pos.Y) - UserInputService:GetMouseLocation()).Magnitude
-            if OnScreen and Dist < MaxDist then
-                if Config.WallCheck then
-                    local RayParams = RaycastParams.new()
-                    RayParams.FilterDescendantsInstances = {LocalPlayer.Character, v.Character}
-                    local Result = Workspace:Raycast(Camera.CFrame.Position, v.Character[Config.AimPart].Position - Camera.CFrame.Position, RayParams)
-                    if Result then continue end
-                end
-                MaxDist = Dist
-                Closest = v
-            end
-        end
-    end
-    return Closest
-end
-
--- [ ЛОГИКА ИНТЕРФЕЙСА ]
+-- ИНИЦИАЛИЗАЦИЯ GUI
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "Blazix_Behemoth"
+ScreenGui.Name = "Blazix_V9_Lux"
 
+-- КНОПКА СВЕРНУТЬ (SIDEBAR ICON)
+local MinButton = Instance.new("TextButton", ScreenGui)
+MinButton.Size = UDim2.new(0, 45, 0, 45)
+MinButton.Position = UDim2.new(0, 10, 0.4, 0)
+MinButton.BackgroundColor3 = Theme.Main
+MinButton.Text = "⚡"
+MinButton.TextColor3 = Theme.Accent
+MinButton.TextSize = 25
+MinButton.Visible = false
+Instance.new("UICorner", MinButton).CornerRadius = UDim.new(1, 0)
+Instance.new("UIStroke", MinButton).Color = Theme.Accent
+
+-- ГЛАВНОЕ ОКНО
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 700, 0, 500)
-Main.Position = UDim2.new(0.5, -350, 0.5, -250)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-Instance.new("UICorner", Main)
-local UIStroke = Instance.new("UIStroke", Main)
-UIStroke.Color = Color3.fromRGB(0, 255, 157)
-UIStroke.Thickness = 2
+Main.Size = UDim2.new(0, 750, 0, 500)
+Main.Position = UDim2.new(0.5, -375, 0.5, -250)
+Main.BackgroundColor3 = Theme.Main
+Main.ClipsDescendants = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Color = Theme.Accent
+MainStroke.Thickness = 2
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- Header
+-- ВЕРХНЯЯ ПАНЕЛЬ (HEADER)
 local Header = Instance.new("Frame", Main)
-Header.Size = UDim2.new(1, 0, 0, 50)
+Header.Size = UDim2.new(1, 0, 0, 60)
 Header.BackgroundTransparency = 1
 
 local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(1, 0, 1, 0)
-Title.Position = UDim2.new(0, 20, 0, 0)
-Title.Text = "BLAZIX HUB V8: BEHEMOTH (UNIVERSAL)"
-Title.TextColor3 = Color3.new(1,1,1)
+Title.Position = UDim2.new(0, 25, 0, 0)
+Title.Text = "BLAZIX <font color='#00ff96'>OMNI</font> V9"
+Title.RichText = true
+Title.TextColor3 = Theme.Text
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
+Title.TextSize = 22
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
--- Sidebar и Контейнер для вкладок
-local Sidebar = Instance.new("ScrollingFrame", Main)
-Sidebar.Size = UDim2.new(0, 160, 1, -60)
-Sidebar.Position = UDim2.new(0, 10, 0, 55)
-Sidebar.BackgroundTransparency = 1
-Sidebar.ScrollBarThickness = 0
-local SidebarLayout = Instance.new("UIListLayout", Sidebar)
-SidebarLayout.Padding = UDim.new(0, 5)
-
-local Container = Instance.new("Frame", Main)
-Container.Size = UDim2.new(1, -190, 1, -70)
-Container.Position = UDim2.new(0, 180, 0, 60)
-Container.BackgroundTransparency = 1
-
-local Pages = {}
-local function CreatePage(Name)
-    local Page = Instance.new("ScrollingFrame", Container)
-    Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.BackgroundTransparency = 1
-    Page.Visible = false
-    Page.ScrollBarThickness = 2
-    local Layout = Instance.new("UIListLayout", Page)
-    Layout.Padding = UDim.new(0, 8)
-    
-    local Tab = Instance.new("TextButton", Sidebar)
-    Tab.Size = UDim2.new(1, 0, 0, 40)
-    Tab.Text = Name
-    Tab.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-    Tab.TextColor3 = Color3.new(1,1,1)
-    Tab.Font = Enum.Font.GothamMedium
-    Instance.new("UICorner", Tab)
-
-    Tab.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages) do p.Visible = false end
-        Page.Visible = true
-    end)
-    Pages[Name] = Page
-    return Page
-end
-
--- Создаем страницы
-local CombatPage = CreatePage("🎯 Combat")
-local MovePage = CreatePage("🚀 Movement")
-local VisualPage = CreatePage("👁️ Visuals")
-local WorldPage = CreatePage("🌍 World")
-local PlayersPage = CreatePage("👥 Player List")
-local MiscPage = CreatePage("⚙️ Misc")
-
--- [ ФУНКЦИИ КОНСТРУКТОРА ЭЛЕМЕНТОВ ]
-local function AddToggle(Parent, Text, Flag, Callback)
-    local T = Instance.new("TextButton", Parent)
-    T.Size = UDim2.new(1, -10, 0, 40)
-    T.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    T.Text = Text .. ": OFF"
-    T.TextColor3 = Color3.new(1,1,1)
-    T.Font = Enum.Font.Gotham
-    Instance.new("UICorner", T)
-    
-    T.MouseButton1Click:Connect(function()
-        Config[Flag] = not Config[Flag]
-        T.Text = Text .. (Config[Flag] and ": ON" or ": OFF")
-        T.BackgroundColor3 = Config[Flag] and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(35, 35, 45)
-        if Callback then Callback(Config[Flag]) end
-    end)
-end
-
-local function AddSlider(Parent, Text, Min, Max, Flag, Callback)
-    local SFrame = Instance.new("Frame", Parent)
-    SFrame.Size = UDim2.new(1, -10, 0, 55)
-    SFrame.BackgroundTransparency = 1
-    
-    local Label = Instance.new("TextLabel", SFrame)
-    Label.Size = UDim2.new(1, 0, 0, 20)
-    Label.Text = Text .. ": " .. Config[Flag]
-    Label.TextColor3 = Color3.new(1,1,1)
-    Label.BackgroundTransparency = 1
-    
-    local SliderBtn = Instance.new("TextButton", SFrame)
-    SliderBtn.Size = UDim2.new(1, 0, 0, 15)
-    SliderBtn.Position = UDim2.new(0, 0, 0, 25)
-    SliderBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-    SliderBtn.Text = ""
-    Instance.new("UICorner", SliderBtn)
-    
-    local Fill = Instance.new("Frame", SliderBtn)
-    Fill.Size = UDim2.new((Config[Flag]-Min)/(Max-Min), 0, 1, 0)
-    Fill.BackgroundColor3 = Color3.fromRGB(0, 255, 157)
-    Instance.new("UICorner", Fill)
-    
-    SliderBtn.MouseButton1Down:Connect(function()
-        local Move = RunService.RenderStepped:Connect(function()
-            local P = math.clamp((UserInputService:GetMouseLocation().X - SliderBtn.AbsolutePosition.X) / SliderBtn.AbsoluteSize.X, 0, 1)
-            Fill.Size = UDim2.new(P, 0, 1, 0)
-            local V = math.floor(Min + (Max - Min) * P)
-            Config[Flag] = V
-            Label.Text = Text .. ": " .. V
-            if Callback then Callback(V) end
-        end)
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then Move:Disconnect() end
-        end)
-    end)
-end
-
--- [ НАПОЛНЕНИЕ ФУНКЦИОНАЛОМ ]
-
--- COMBAT
-AddToggle(CombatPage, "Silent Aim", "SilentAim")
-AddToggle(CombatPage, "Show FOV Circle", "FOVVisible")
-AddSlider(CombatPage, "FOV Radius", 30, 800, "AimFOV")
-AddToggle(CombatPage, "Hitbox Expander", "HitboxExpander")
-AddSlider(CombatPage, "Hitbox Size", 2, 30, "HitboxSize")
-AddToggle(CombatPage, "Trigger Bot", "TriggerBot")
-AddToggle(CombatPage, "Wall Check", "WallCheck")
-
--- MOVEMENT
-AddSlider(MovePage, "WalkSpeed Bypass", 16, 300, "Speed")
-AddSlider(MovePage, "JumpPower Bypass", 50, 500, "Jump")
-AddToggle(MovePage, "Infinite Jump", "InfJump")
-AddToggle(MovePage, "No-Clip", "Noclip")
-AddToggle(MovePage, "Anti-Void", "AntiVoid")
-AddToggle(MovePage, "Fly Mode", "Fly")
-AddSlider(MovePage, "Fly Speed", 10, 500, "FlySpeed")
-
--- VISUALS
-AddToggle(VisualPage, "Enable ESP", "ESP_Enabled")
-AddToggle(VisualPage, "Box ESP", "ESP_Box")
-AddToggle(VisualPage, "Name ESP", "ESP_Name")
-AddToggle(VisualPage, "Tracer ESP", "ESP_Tracer")
-AddToggle(VisualPage, "Chams (Highlights)", "ESP_Chams", function(v)
-    for _, p in pairs(Players:GetPlayers()) do
-        if p.Character then
-            local highlight = p.Character:FindFirstChild("BlHighlight") or Instance.new("Highlight", p.Character)
-            highlight.Name = "BlHighlight"
-            highlight.Enabled = v
-        end
-    end
-end)
-
--- WORLD
-AddToggle(WorldPage, "FullBright", "FullBright", function(v)
-    Lighting.Brightness = v and 2 or 1
-    Lighting.Ambient = v and Color3.new(1,1,1) or Color3.new(0,0,0)
-end)
-AddToggle(WorldPage, "No Fog", "NoFog", function(v) Lighting.FogEnd = v and 1e6 or 1000 end)
-AddToggle(WorldPage, "Anti-Lava (NoTouch)", "RemoveLava")
-AddSlider(WorldPage, "Custom Gravity", 0, 196, "GravityForce", function(v) workspace.Gravity = v end)
-
--- [ ГЛАВНЫЕ ОБРАБОТЧИКИ ]
-
--- 1. Движение
-RunService.Heartbeat:Connect(function()
-    local Char = LocalPlayer.Character
-    if not Char or not Char:FindFirstChild("Humanoid") then return end
-    
-    local Hum = Char.Humanoid
-    local HRP = Char.HumanoidRootPart
-
-    -- Bypass Speed
-    if Config.Speed > 16 and Hum.MoveDirection.Magnitude > 0 then
-        Char:TranslateBy(Hum.MoveDirection * (Config.Speed / 100))
-    end
-    
-    -- Fly
-    if Config.Fly then
-        local Dir = Vector3.new(0,0,0)
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then Dir = Dir + Camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then Dir = Dir - Camera.CFrame.LookVector end
-        HRP.Velocity = Dir * Config.FlySpeed
-    end
-
-    -- Anti-Void
-    if Config.AntiVoid and HRP.Position.Y < Config.VoidY then
-        HRP.Velocity = Vector3.new(0,0,0)
-        HRP.CFrame = CFrame.new(HRP.Position.X, 100, HRP.Position.Z)
-    end
-end)
-
--- 2. ESP & FOV
-RunService.RenderStepped:Connect(function()
-    FOVCircle.Visible = Config.FOVVisible
-    FOVCircle.Radius = Config.AimFOV
-    FOVCircle.Position = UserInputService:GetMouseLocation()
-
-    if Config.SilentAim then
-        local Target = GetClosestPlayer()
-        if Target and Target.Character and Target.Character:FindFirstChild(Config.AimPart) then
-            -- Логика Silent Aim (здесь может быть хук метатаблицы, но для универсальности используем наведение камеры)
-            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character[Config.AimPart].Position)
-            end
-        end
-    end
-end)
-
--- 3. Hitboxes
-spawn(function()
-    while task.wait(1) do
-        if Config.HitboxExpander then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    p.Character.HumanoidRootPart.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                    p.Character.HumanoidRootPart.Transparency = Config.HitboxTransparency
-                    p.Character.HumanoidRootPart.CanCollide = false
-                end
-            end
-        end
-    end
-end)
-
--- [ PLAYER LIST PAGE DYNAMIC ]
-local function RefreshPlayerList()
-    for _, obj in pairs(PlayersPage:GetChildren()) do if obj:IsA("Frame") then obj:Destroy() end end
-    for _, p in pairs(Players:GetPlayers()) do
-        local F = Instance.new("Frame", PlayersPage)
-        F.Size = UDim2.new(1, -10, 0, 40)
-        F.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        Instance.new("UICorner", F)
-        
-        local L = Instance.new("TextLabel", F)
-        L.Size = UDim2.new(0.6, 0, 1, 0)
-        L.Text = p.Name
-        L.TextColor3 = Color3.new(1,1,1)
-        L.BackgroundTransparency = 1
-        
-        local B = Instance.new("TextButton", F)
-        B.Size = UDim2.new(0.3, 0, 0.8, 0)
-        B.Position = UDim2.new(0.65, 0, 0.1, 0)
-        B.Text = "Teleport"
-        B.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-        Instance.new("UICorner", B)
-        B.MouseButton1Click:Connect(function()
-            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame
-            end
-        end)
-    end
-end
-AddToggle(PlayersPage, "Auto-Refresh List", "AutoRefresh", function() RefreshPlayerList() end)
-
--- [ УПРАВЛЕНИЕ ОКНОМ ]
 local Close = Instance.new("TextButton", Header)
 Close.Size = UDim2.new(0, 35, 0, 35)
-Close.Position = UDim2.new(1, -45, 0, 7)
-Close.Text = "X"
-Close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+Close.Position = UDim2.new(1, -50, 0, 12)
+Close.Text = "×"
+Close.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+Close.TextColor3 = Theme.Text
+Close.TextSize = 25
 Instance.new("UICorner", Close)
+
+local Hide = Instance.new("TextButton", Header)
+Hide.Size = UDim2.new(0, 35, 0, 35)
+Hide.Position = UDim2.new(1, -95, 0, 12)
+Hide.Text = "—"
+Hide.BackgroundColor3 = Theme.Element
+Hide.TextColor3 = Theme.Text
+Instance.new("UICorner", Hide)
+
+-- ЛЕВАЯ ПАНЕЛЬ (NAV)
+local Nav = Instance.new("Frame", Main)
+Nav.Size = UDim2.new(0, 180, 1, -80)
+Nav.Position = UDim2.new(0, 15, 0, 70)
+Nav.BackgroundTransparency = 1
+local NavList = Instance.new("UIListLayout", Nav)
+NavList.Padding = UDim.new(0, 10)
+
+-- КОНТЕЙНЕР ДЛЯ ФУНКЦИЙ
+local Container = Instance.new("ScrollingFrame", Main)
+Container.Size = UDim2.new(1, -220, 1, -80)
+Container.Position = UDim2.new(0, 205, 0, 70)
+Container.BackgroundTransparency = 1
+Container.ScrollBarThickness = 2
+Container.CanvasSize = UDim2.new(0,0,2,0)
+local ContentList = Instance.new("UIListLayout", Container)
+ContentList.Padding = UDim.new(0, 12)
+
+-- ФУНКЦИЯ СОЗДАНИЯ СЛОЖНОЙ КНОПКИ (С НАСТРОЙКАМИ ВНУТРИ)
+local function AddSmartModule(parent, name, flag, settings_func)
+    local ModuleFrame = Instance.new("Frame", parent)
+    ModuleFrame.Size = UDim2.new(1, -10, 0, 50) -- Начальная высота
+    ModuleFrame.BackgroundColor3 = Theme.Element
+    ModuleFrame.ClipsDescendants = true
+    Instance.new("UICorner", ModuleFrame)
+    
+    local MainBtn = Instance.new("TextButton", ModuleFrame)
+    MainBtn.Size = UDim2.new(1, 0, 0, 50)
+    MainBtn.BackgroundTransparency = 1
+    MainBtn.Text = ""
+    
+    local Label = Instance.new("TextLabel", MainBtn)
+    Label.Size = UDim2.new(1, -100, 1, 0)
+    Label.Position = UDim2.new(0, 15, 0, 0)
+    Label.Text = name
+    Label.TextColor3 = Theme.Text
+    Label.Font = Enum.Font.GothamMedium
+    Label.TextSize = 16
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.BackgroundTransparency = 1
+
+    local Status = Instance.new("Frame", MainBtn)
+    Status.Size = UDim2.new(0, 40, 0, 20)
+    Status.Position = UDim2.new(1, -110, 0.5, -10)
+    Status.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Instance.new("UICorner", Status).CornerRadius = UDim.new(1, 0)
+    
+    local Dot = Instance.new("Frame", Status)
+    Dot.Size = UDim2.new(0, 16, 0, 16)
+    Dot.Position = UDim2.new(0, 2, 0.5, -8)
+    Dot.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+
+    local SettingsBtn = Instance.new("TextButton", MainBtn)
+    SettingsBtn.Size = UDim2.new(0, 30, 0, 30)
+    SettingsBtn.Position = UDim2.new(1, -50, 0.5, -15)
+    SettingsBtn.Text = "⚙"
+    SettingsBtn.TextColor3 = Theme.DarkText
+    SettingsBtn.BackgroundTransparency = 1
+    SettingsBtn.TextSize = 20
+
+    -- Логика включения
+    MainBtn.MouseButton1Click:Connect(function()
+        Config[flag] = not Config[flag]
+        local targetPos = Config[flag] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        local targetCol = Config[flag] and Theme.Accent or Color3.fromRGB(100, 100, 100)
+        TweenService:Create(Dot, TweenInfo.new(0.3), {Position = targetPos, BackgroundColor3 = targetCol}):Play()
+    end)
+
+    -- Разворот настроек
+    local expanded = false
+    SettingsBtn.MouseButton1Click:Connect(function()
+        expanded = not expanded
+        local targetSize = expanded and UDim2.new(1, -10, 0, 150) or UDim2.new(1, -10, 0, 50)
+        TweenService:Create(ModuleFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Size = targetSize}):Play()
+    end)
+
+    -- Контейнер для слайдеров внутри
+    local SettingsArea = Instance.new("Frame", ModuleFrame)
+    SettingsArea.Size = UDim2.new(1, -20, 0, 90)
+    SettingsArea.Position = UDim2.new(0, 10, 0, 55)
+    SettingsArea.BackgroundTransparency = 1
+    
+    if settings_func then settings_func(SettingsArea) end
+end
+
+-- ВСПОМОГАТЕЛЬНЫЙ СЛАЙДЕР ДЛЯ НАСТРОЕК
+local function AddInternalSlider(parent, text, min, max, key)
+    local Label = Instance.new("TextLabel", parent)
+    Label.Size = UDim2.new(1, 0, 0, 20)
+    Label.Text = text .. ": " .. Config[key]
+    Label.TextColor3 = Theme.DarkText
+    Label.BackgroundTransparency = 1
+    Label.Font = Enum.Font.Gotham
+    Label.TextSize = 14
+
+    local Bar = Instance.new("TextButton", parent)
+    Bar.Size = UDim2.new(1, 0, 0, 6)
+    Bar.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Bar.Text = ""
+    Instance.new("UICorner", Bar)
+    
+    local Fill = Instance.new("Frame", Bar)
+    Fill.Size = UDim2.new((Config[key]-min)/(max-min), 0, 1, 0)
+    Fill.BackgroundColor3 = Theme.Accent
+    Instance.new("UICorner", Fill)
+
+    Bar.MouseButton1Down:Connect(function()
+        local move = RunService.RenderStepped:Connect(function()
+            local per = math.clamp((UserInputService:GetMouseLocation().X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+            Fill.Size = UDim2.new(per, 0, 1, 0)
+            local val = math.floor(min + (max - min) * per)
+            Config[key] = val
+            Label.Text = text .. ": " .. val
+        end)
+        UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then move:Disconnect() end end)
+    end)
+end
+
+-- [ НАПОЛНЕНИЕ МОДУЛЯМИ ]
+
+-- 1. SPEED
+AddSmartModule(Container, "Super Speed (Bypass)", "SpeedEnabled", function(area)
+    AddInternalSlider(area, "Velocity Value", 16, 300, "Speed")
+end)
+
+-- 2. JUMP
+AddSmartModule(Container, "Mega Jump Power", "JumpEnabled", function(area)
+    AddInternalSlider(area, "Jump Height", 50, 500, "Jump")
+end)
+
+-- 3. FLY
+AddSmartModule(Container, "God Flight", "Fly", function(area)
+    AddInternalSlider(area, "Flight Speed", 10, 500, "FlySpeed")
+end)
+
+-- 4. COMBAT
+AddSmartModule(Container, "Hitbox Expander", "HitboxEnabled", function(area)
+    AddInternalSlider(area, "Radius Size", 2, 50, "HitboxSize")
+end)
+
+-- [ ЛОГИКА ]
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    
+    -- Speed logic
+    if Config.SpeedEnabled and char.Humanoid.MoveDirection.Magnitude > 0 then
+        char:TranslateBy(char.Humanoid.MoveDirection * (Config.Speed / 100))
+    end
+    
+    -- Hitboxes
+    if Config.HitboxEnabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                p.Character.HumanoidRootPart.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                p.Character.HumanoidRootPart.Transparency = 0.7
+            end
+        end
+    end
+end)
+
+-- DRAG & HIDE
+Hide.MouseButton1Click:Connect(function() Main.Visible = false MinButton.Visible = true end)
+MinButton.MouseButton1Click:Connect(function() Main.Visible = true MinButton.Visible = false end)
 Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- Dragging
-local Dragging, DragInput, DragStart, StartPos
-Header.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = true DragStart = i.Position StartPos = Main.Position end end)
-UserInputService.InputChanged:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement and Dragging then
-    local Delta = i.Position - DragStart
-    Main.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
+-- Перетаскивание
+local dragging, dStart, sPos
+Header.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true dStart = i.Position sPos = Main.Position end end)
+UserInputService.InputChanged:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+    local delta = i.Position - dStart
+    Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
 end end)
-UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = false end end)
-
--- Инициализация ESP для зашедших
-Players.PlayerAdded:Connect(CreateESP)
-for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then CreateESP(p) end end
-
--- Уведомление
-StarterGui:SetCore("SendNotification", {Title = "BLAZIX BEHEMOTH", Text = "V8 LOADED SUCCESSFULLY", Duration = 5})
+UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
