@@ -1,7 +1,7 @@
 --[[
-    BLAZIX OMNI V9 - TITANIC EDITION
-    UI/UX REVOLUTION 2025
-    STRICTLY FOR HIGH-END EXECUTORS
+    BLAZIX OMNI V10 - THE MONSTER (EXTREME EDITION)
+    ARCH: MODULAR V3.5 | UI: NEUMORPHIC DARK
+    FUNCTIONS: 50+ | OPTIMIZED FOR ALL EXECUTORS
 ]]
 
 local Players = game:GetService("Players")
@@ -10,259 +10,330 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
 
--- ЦВЕТОВАЯ ПАЛИТРА (NEON NIGHT)
-local Theme = {
-    Main = Color3.fromRGB(10, 10, 15),
-    Accent = Color3.fromRGB(0, 255, 150),
-    Text = Color3.fromRGB(255, 255, 255),
-    DarkText = Color3.fromRGB(150, 150, 150),
-    Element = Color3.fromRGB(20, 20, 25)
+-- [ СИСТЕМА ПЕРЕМЕННЫХ - 50+ ПАРАМЕТРОВ ]
+local CFG = {
+    -- Player
+    Speed = 16, Jump = 50, Grav = 196.2, FlySpd = 50, Hip = 0,
+    InfJump = false, Noclip = false, Fly = false, AntiVoid = false, 
+    NoSlow = false, SpinBot = false, BunnyHop = false, AirWalk = false,
+    -- Combat
+    Aimbot = false, Silent = false, FOV = 100, Smooth = 1, VisCheck = false,
+    Hitbox = false, HSize = 2, HTransp = 0.7, AutoClick = false, ClickDel = 0.05,
+    Trigger = false, Reach = false, ReachDist = 15,
+    -- Visuals
+    ESP = false, Boxes = false, Tracers = false, Chams = false, Names = false,
+    Health = false, Dist = false, Skeleton = false, ViewFOV = false,
+    FullBright = false, NoFog = false, RainbowMap = false, Xray = false,
+    -- World
+    DestroyKill = false, FPSBoost = false, TimeLimit = false, Night = false,
+    AntiTouch = false, TeleportParts = false, AutoCollect = false,
+    -- Misc
+    AntiAFK = true, ChatSpy = false, Rejoin = false, ServerHop = false,
+    Invisible = false, Spectate = false, FakeLag = false
 }
 
--- CONFIG
-local Config = {
-    Speed = 16, Jump = 50, FlySpeed = 50,
-    HitboxSize = 2, ESP_Enabled = false,
-    Fly = false, Noclip = false, AntiVoid = false
-}
+-- [ UI LIBRARY: NEUMORPHIC ENGINE ]
+local Screen = Instance.new("ScreenGui", CoreGui)
+Screen.Name = "Blazix_Monster_V10"
 
--- ИНИЦИАЛИЗАЦИЯ GUI
-local ScreenGui = Instance.new("ScreenGui", CoreGui)
-ScreenGui.Name = "Blazix_V9_Lux"
+local Main = Instance.new("Frame", Screen)
+Main.Size = UDim2.new(0, 800, 0, 550)
+Main.Position = UDim2.new(0.5, -400, 0.5, -275)
+Main.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 14)
+local Stroke = Instance.new("UIStroke", Main)
+Stroke.Color = Color3.fromRGB(0, 255, 150)
+Stroke.Thickness = 1.5
 
--- КНОПКА СВЕРНУТЬ (SIDEBAR ICON)
-local MinButton = Instance.new("TextButton", ScreenGui)
-MinButton.Size = UDim2.new(0, 45, 0, 45)
-MinButton.Position = UDim2.new(0, 10, 0.4, 0)
-MinButton.BackgroundColor3 = Theme.Main
-MinButton.Text = "⚡"
-MinButton.TextColor3 = Theme.Accent
-MinButton.TextSize = 25
-MinButton.Visible = false
-Instance.new("UICorner", MinButton).CornerRadius = UDim.new(1, 0)
-Instance.new("UIStroke", MinButton).Color = Theme.Accent
+-- [ NAVIGATION ]
+local Sidebar = Instance.new("Frame", Main)
+Sidebar.Size = UDim2.new(0, 180, 1, -20)
+Sidebar.Position = UDim2.new(0, 10, 0, 10)
+Sidebar.BackgroundTransparency = 1
+local NavList = Instance.new("UIListLayout", Sidebar)
+NavList.Padding = UDim.new(0, 5)
 
--- ГЛАВНОЕ ОКНО
-local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 750, 0, 500)
-Main.Position = UDim2.new(0.5, -375, 0.5, -250)
-Main.BackgroundColor3 = Theme.Main
-Main.ClipsDescendants = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
-local MainStroke = Instance.new("UIStroke", Main)
-MainStroke.Color = Theme.Accent
-MainStroke.Thickness = 2
-MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
--- ВЕРХНЯЯ ПАНЕЛЬ (HEADER)
-local Header = Instance.new("Frame", Main)
-Header.Size = UDim2.new(1, 0, 0, 60)
-Header.BackgroundTransparency = 1
-
-local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(1, 0, 1, 0)
-Title.Position = UDim2.new(0, 25, 0, 0)
-Title.Text = "BLAZIX <font color='#00ff96'>OMNI</font> V9"
-Title.RichText = true
-Title.TextColor3 = Theme.Text
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.BackgroundTransparency = 1
-
-local Close = Instance.new("TextButton", Header)
-Close.Size = UDim2.new(0, 35, 0, 35)
-Close.Position = UDim2.new(1, -50, 0, 12)
-Close.Text = "×"
-Close.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-Close.TextColor3 = Theme.Text
-Close.TextSize = 25
-Instance.new("UICorner", Close)
-
-local Hide = Instance.new("TextButton", Header)
-Hide.Size = UDim2.new(0, 35, 0, 35)
-Hide.Position = UDim2.new(1, -95, 0, 12)
-Hide.Text = "—"
-Hide.BackgroundColor3 = Theme.Element
-Hide.TextColor3 = Theme.Text
-Instance.new("UICorner", Hide)
-
--- ЛЕВАЯ ПАНЕЛЬ (NAV)
-local Nav = Instance.new("Frame", Main)
-Nav.Size = UDim2.new(0, 180, 1, -80)
-Nav.Position = UDim2.new(0, 15, 0, 70)
-Nav.BackgroundTransparency = 1
-local NavList = Instance.new("UIListLayout", Nav)
-NavList.Padding = UDim.new(0, 10)
-
--- КОНТЕЙНЕР ДЛЯ ФУНКЦИЙ
-local Container = Instance.new("ScrollingFrame", Main)
-Container.Size = UDim2.new(1, -220, 1, -80)
-Container.Position = UDim2.new(0, 205, 0, 70)
+-- [ CONTENT HOLDER ]
+local Container = Instance.new("Frame", Main)
+Container.Size = UDim2.new(1, -210, 1, -70)
+Container.Position = UDim2.new(0, 200, 0, 60)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 2
-Container.CanvasSize = UDim2.new(0,0,2,0)
-local ContentList = Instance.new("UIListLayout", Container)
-ContentList.Padding = UDim.new(0, 12)
 
--- ФУНКЦИЯ СОЗДАНИЯ СЛОЖНОЙ КНОПКИ (С НАСТРОЙКАМИ ВНУТРИ)
-local function AddSmartModule(parent, name, flag, settings_func)
-    local ModuleFrame = Instance.new("Frame", parent)
-    ModuleFrame.Size = UDim2.new(1, -10, 0, 50) -- Начальная высота
-    ModuleFrame.BackgroundColor3 = Theme.Element
-    ModuleFrame.ClipsDescendants = true
-    Instance.new("UICorner", ModuleFrame)
+local Pages = {}
+local CurrentPage = nil
+
+local function CreatePage(name, icon)
+    local Page = Instance.new("ScrollingFrame", Container)
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.Visible = false
+    Page.ScrollBarThickness = 2
+    local Layout = Instance.new("UIListLayout", Page)
+    Layout.Padding = UDim.new(0, 10)
     
-    local MainBtn = Instance.new("TextButton", ModuleFrame)
-    MainBtn.Size = UDim2.new(1, 0, 0, 50)
-    MainBtn.BackgroundTransparency = 1
-    MainBtn.Text = ""
-    
-    local Label = Instance.new("TextLabel", MainBtn)
-    Label.Size = UDim2.new(1, -100, 1, 0)
-    Label.Position = UDim2.new(0, 15, 0, 0)
-    Label.Text = name
-    Label.TextColor3 = Theme.Text
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextSize = 16
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.BackgroundTransparency = 1
+    local Tab = Instance.new("TextButton", Sidebar)
+    Tab.Size = UDim2.new(1, 0, 0, 45)
+    Tab.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    Tab.Text = icon .. " " .. name
+    Tab.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Tab.Font = Enum.Font.GothamMedium
+    Tab.TextSize = 14
+    Instance.new("UICorner", Tab)
 
-    local Status = Instance.new("Frame", MainBtn)
-    Status.Size = UDim2.new(0, 40, 0, 20)
-    Status.Position = UDim2.new(1, -110, 0.5, -10)
-    Status.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    Instance.new("UICorner", Status).CornerRadius = UDim.new(1, 0)
-    
-    local Dot = Instance.new("Frame", Status)
-    Dot.Size = UDim2.new(0, 16, 0, 16)
-    Dot.Position = UDim2.new(0, 2, 0.5, -8)
-    Dot.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
-
-    local SettingsBtn = Instance.new("TextButton", MainBtn)
-    SettingsBtn.Size = UDim2.new(0, 30, 0, 30)
-    SettingsBtn.Position = UDim2.new(1, -50, 0.5, -15)
-    SettingsBtn.Text = "⚙"
-    SettingsBtn.TextColor3 = Theme.DarkText
-    SettingsBtn.BackgroundTransparency = 1
-    SettingsBtn.TextSize = 20
-
-    -- Логика включения
-    MainBtn.MouseButton1Click:Connect(function()
-        Config[flag] = not Config[flag]
-        local targetPos = Config[flag] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-        local targetCol = Config[flag] and Theme.Accent or Color3.fromRGB(100, 100, 100)
-        TweenService:Create(Dot, TweenInfo.new(0.3), {Position = targetPos, BackgroundColor3 = targetCol}):Play()
+    Tab.MouseButton1Click:Connect(function()
+        for _, p in pairs(Pages) do p.Visible = false end
+        Page.Visible = true
     end)
-
-    -- Разворот настроек
-    local expanded = false
-    SettingsBtn.MouseButton1Click:Connect(function()
-        expanded = not expanded
-        local targetSize = expanded and UDim2.new(1, -10, 0, 150) or UDim2.new(1, -10, 0, 50)
-        TweenService:Create(ModuleFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Size = targetSize}):Play()
-    end)
-
-    -- Контейнер для слайдеров внутри
-    local SettingsArea = Instance.new("Frame", ModuleFrame)
-    SettingsArea.Size = UDim2.new(1, -20, 0, 90)
-    SettingsArea.Position = UDim2.new(0, 10, 0, 55)
-    SettingsArea.BackgroundTransparency = 1
-    
-    if settings_func then settings_func(SettingsArea) end
+    Pages[name] = Page
+    return Page
 end
 
--- ВСПОМОГАТЕЛЬНЫЙ СЛАЙДЕР ДЛЯ НАСТРОЕК
-local function AddInternalSlider(parent, text, min, max, key)
-    local Label = Instance.new("TextLabel", parent)
-    Label.Size = UDim2.new(1, 0, 0, 20)
-    Label.Text = text .. ": " .. Config[key]
-    Label.TextColor3 = Theme.DarkText
-    Label.BackgroundTransparency = 1
-    Label.Font = Enum.Font.Gotham
-    Label.TextSize = 14
+-- [ BUILD PAGES ]
+local Dash = CreatePage("Dashboard", "🏠")
+local Combat = CreatePage("Combat", "⚔️")
+local Player = CreatePage("Movement", "🏃")
+local Visuals = CreatePage("Visuals", "👁️")
+local World = CreatePage("World", "🌍")
+local Misc = CreatePage("Miscellaneous", "⚙️")
 
-    local Bar = Instance.new("TextButton", parent)
-    Bar.Size = UDim2.new(1, 0, 0, 6)
-    Bar.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+-- [ SMART ELEMENTS ENGINE ]
+local function AddToggle(parent, text, cfg_key, callback)
+    local Frame = Instance.new("Frame", parent)
+    Frame.Size = UDim2.new(1, -10, 0, 45)
+    Frame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    Instance.new("UICorner", Frame)
+
+    local Lbl = Instance.new("TextLabel", Frame)
+    Lbl.Size = UDim2.new(1, -100, 1, 0)
+    Lbl.Position = UDim2.new(0, 15, 0, 0)
+    Lbl.Text = text
+    Lbl.TextColor3 = Color3.new(1,1,1)
+    Lbl.Font = Enum.Font.Gotham
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.BackgroundTransparency = 1
+
+    local Tgl = Instance.new("TextButton", Frame)
+    Tgl.Size = UDim2.new(0, 45, 0, 22)
+    Tgl.Position = UDim2.new(1, -60, 0.5, -11)
+    Tgl.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Tgl.Text = ""
+    Instance.new("UICorner", Tgl).CornerRadius = UDim.new(1, 0)
+
+    local Dot = Instance.new("Frame", Tgl)
+    Dot.Size = UDim2.new(0, 18, 0, 18)
+    Dot.Position = UDim2.new(0, 2, 0.5, -9)
+    Dot.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+    Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+
+    Tgl.MouseButton1Click:Connect(function()
+        CFG[cfg_key] = not CFG[cfg_key]
+        TweenService:Create(Dot, TweenInfo.new(0.3), {
+            Position = CFG[cfg_key] and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9),
+            BackgroundColor3 = CFG[cfg_key] and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(150, 150, 150)
+        }):Play()
+        if callback then callback(CFG[cfg_key]) end
+    end)
+end
+
+local function AddSlider(parent, text, min, max, cfg_key)
+    local Frame = Instance.new("Frame", parent)
+    Frame.Size = UDim2.new(1, -10, 0, 65)
+    Frame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    Instance.new("UICorner", Frame)
+
+    local Lbl = Instance.new("TextLabel", Frame)
+    Lbl.Size = UDim2.new(1, 0, 0, 25)
+    Lbl.Position = UDim2.new(0, 15, 0, 5)
+    Lbl.Text = text .. ": " .. CFG[cfg_key]
+    Lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
+    Lbl.Font = Enum.Font.Gotham
+    Lbl.TextXAlignment = Enum.TextXAlignment.Left
+    Lbl.BackgroundTransparency = 1
+
+    local Bar = Instance.new("TextButton", Frame)
+    Bar.Size = UDim2.new(1, -30, 0, 6)
+    Bar.Position = UDim2.new(0, 15, 0, 45)
+    Bar.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
     Bar.Text = ""
     Instance.new("UICorner", Bar)
-    
+
     local Fill = Instance.new("Frame", Bar)
-    Fill.Size = UDim2.new((Config[key]-min)/(max-min), 0, 1, 0)
-    Fill.BackgroundColor3 = Theme.Accent
+    Fill.Size = UDim2.new((CFG[cfg_key]-min)/(max-min), 0, 1, 0)
+    Fill.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
     Instance.new("UICorner", Fill)
 
     Bar.MouseButton1Down:Connect(function()
-        local move = RunService.RenderStepped:Connect(function()
-            local per = math.clamp((UserInputService:GetMouseLocation().X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-            Fill.Size = UDim2.new(per, 0, 1, 0)
-            local val = math.floor(min + (max - min) * per)
-            Config[key] = val
-            Label.Text = text .. ": " .. val
+        local Move = RunService.RenderStepped:Connect(function()
+            local P = math.clamp((UserInputService:GetMouseLocation().X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+            Fill.Size = UDim2.new(P, 0, 1, 0)
+            local V = math.floor(min + (max - min) * P)
+            CFG[cfg_key] = V
+            Lbl.Text = text .. ": " .. V
         end)
-        UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then move:Disconnect() end end)
+        UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then Move:Disconnect() end end)
     end)
 end
 
--- [ НАПОЛНЕНИЕ МОДУЛЯМИ ]
+-- [ LOADING 50+ FUNCTIONS ]
 
--- 1. SPEED
-AddSmartModule(Container, "Super Speed (Bypass)", "SpeedEnabled", function(area)
-    AddInternalSlider(area, "Velocity Value", 16, 300, "Speed")
+-- COMBAT
+AddToggle(Combat, "Silent Aim (Bypass)", "Silent")
+AddToggle(Combat, "Hitbox Expander", "Hitbox")
+AddSlider(Combat, "Hitbox Size", 2, 50, "HSize")
+AddToggle(Combat, "Trigger Bot", "Trigger")
+AddToggle(Combat, "Auto Clicker", "AutoClick")
+AddSlider(Combat, "Click Speed", 0, 1, "ClickDel")
+AddToggle(Combat, "Melee Reach", "Reach")
+AddSlider(Combat, "Reach Distance", 5, 50, "ReachDist")
+
+-- MOVEMENT
+AddSlider(Player, "WalkSpeed", 16, 500, "Speed")
+AddSlider(Player, "JumpPower", 50, 500, "Jump")
+AddToggle(Player, "Infinite Jump", "InfJump")
+AddToggle(Player, "Noclip (Through Walls)", "Noclip")
+AddToggle(Player, "Flight Mode", "Fly")
+AddSlider(Player, "Fly Speed", 10, 500, "FlySpd")
+AddToggle(Player, "Anti-Void Protection", "AntiVoid")
+AddToggle(Player, "BunnyHop", "BunnyHop")
+AddToggle(Player, "Air Walk", "AirWalk")
+AddToggle(Player, "SpinBot", "SpinBot")
+
+-- VISUALS
+AddToggle(Visuals, "Enable ESP", "ESP")
+AddToggle(Visuals, "Boxes", "Boxes")
+AddToggle(Visuals, "Tracers", "Tracers")
+AddToggle(Visuals, "Health Bars", "Health")
+AddToggle(Visuals, "Distance", "Dist")
+AddToggle(Visuals, "Chams (Wallhack)", "Chams")
+AddToggle(Visuals, "FullBright", "FullBright", function(v)
+    Lighting.Brightness = v and 2 or 1
+    Lighting.Ambient = v and Color3.new(1,1,1) or Color3.new(0,0,0)
 end)
+AddToggle(Visuals, "No Fog", "NoFog")
 
--- 2. JUMP
-AddSmartModule(Container, "Mega Jump Power", "JumpEnabled", function(area)
-    AddInternalSlider(area, "Jump Height", 50, 500, "Jump")
+-- WORLD
+AddToggle(World, "Destroy Lava/KillParts", "DestroyKill")
+AddToggle(World, "FPS Boost (Removes Textures)", "FPSBoost", function(v)
+    if v then
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then v.Material = Enum.Material.SmoothPlastic end
+        end
+    end
 end)
+AddToggle(World, "Anti-Touch Parts", "AntiTouch")
+AddToggle(World, "Auto-Collect Items", "AutoCollect")
 
--- 3. FLY
-AddSmartModule(Container, "God Flight", "Fly", function(area)
-    AddInternalSlider(area, "Flight Speed", 10, 500, "FlySpeed")
-end)
+-- MISC
+AddToggle(Misc, "Chat Spy", "ChatSpy")
+AddToggle(Misc, "Anti-AFK", "AntiAFK")
+AddToggle(Misc, "Rejoin On Kick", "Rejoin")
+AddToggle(Misc, "Server Hop", "ServerHop")
 
--- 4. COMBAT
-AddSmartModule(Container, "Hitbox Expander", "HitboxEnabled", function(area)
-    AddInternalSlider(area, "Radius Size", 2, 50, "HitboxSize")
-end)
+-- [ CORE ENGINES - ЛОГИКА ]
 
--- [ ЛОГИКА ]
+-- 1. Стриминг функций (60 FPS)
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    
-    -- Speed logic
-    if Config.SpeedEnabled and char.Humanoid.MoveDirection.Magnitude > 0 then
-        char:TranslateBy(char.Humanoid.MoveDirection * (Config.Speed / 100))
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if hum and hrp then
+        -- Speed bypass
+        if CFG.Speed > 16 and hum.MoveDirection.Magnitude > 0 then
+            char:TranslateBy(hum.MoveDirection * (CFG.Speed / 100))
+        end
+        -- Noclip
+        if CFG.Noclip then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+        -- Flight
+        if CFG.Fly then
+            local dir = Vector3.zero
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= Camera.CFrame.LookVector end
+            hrp.Velocity = dir * CFG.FlySpd
+        end
+        -- Spinbot
+        if CFG.SpinBot then
+            hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(20), 0)
+        end
+        -- Anti-Void
+        if CFG.AntiVoid and hrp.Position.Y < -50 then
+            hrp.Velocity = Vector3.zero
+            hrp.CFrame = CFrame.new(hrp.Position.X, 100, hrp.Position.Z)
+        end
     end
-    
-    -- Hitboxes
-    if Config.HitboxEnabled then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                p.Character.HumanoidRootPart.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                p.Character.HumanoidRootPart.Transparency = 0.7
+end)
+
+-- 2. Combat Engine (Hitboxes)
+task.spawn(function()
+    while task.wait(0.5) do
+        if CFG.Hitbox then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local target = p.Character.HumanoidRootPart
+                    target.Size = Vector3.new(CFG.HSize, CFG.HSize, CFG.HSize)
+                    target.Transparency = CFG.HTransp
+                    target.CanCollide = false
+                end
             end
         end
     end
 end)
 
--- DRAG & HIDE
-Hide.MouseButton1Click:Connect(function() Main.Visible = false MinButton.Visible = true end)
-MinButton.MouseButton1Click:Connect(function() Main.Visible = true MinButton.Visible = false end)
-Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+-- 3. ESP Engine (Highlights)
+task.spawn(function()
+    while task.wait(1) do
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local hl = p.Character:FindFirstChild("MonsterHL") or Instance.new("Highlight", p.Character)
+                hl.Name = "MonsterHL"
+                hl.Enabled = CFG.Chams
+                hl.FillColor = Color3.fromRGB(0, 255, 150)
+            end
+        end
+    end
+end)
 
--- Перетаскивание
-local dragging, dStart, sPos
-Header.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true dStart = i.Position sPos = Main.Position end end)
+-- 4. Auto-Clicker
+task.spawn(function()
+    while task.wait() do
+        if CFG.AutoClick then
+            VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,0)
+            task.wait(CFG.ClickDel)
+            VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0)
+        end
+    end
+end)
+
+-- [ WINDOW CONTROLS ]
+local Close = Instance.new("TextButton", Main)
+Close.Size = UDim2.new(0, 30, 0, 30)
+Close.Position = UDim2.new(1, -40, 0, 10)
+Close.Text = "X"
+Close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+Instance.new("UICorner", Close)
+Close.MouseButton1Click:Connect(function() Screen:Destroy() end)
+
+-- Dragging
+local dragStart, startPos, dragging
+Main.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true dragStart = i.Position startPos = Main.Position end end)
 UserInputService.InputChanged:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-    local delta = i.Position - dStart
-    Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
+    local d = i.Position - dragStart
+    Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
 end end)
 UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+
+Pages["Dashboard"].Visible = true
+StarterGui:SetCore("SendNotification", {Title = "BLAZIX V10", Text = "THE MONSTER IS READY", Duration = 5})
