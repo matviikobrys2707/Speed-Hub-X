@@ -129,7 +129,9 @@ do
     CloseButton.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
         for _, conn in pairs(connections) do
-            conn:Disconnect()
+            if conn and typeof(conn) == "RBXScriptConnection" then
+                conn:Disconnect()
+            end
         end
     end)
 
@@ -191,6 +193,7 @@ do
                     else
                         if connections.Speed then
                             connections.Speed:Disconnect()
+                            connections.Speed = nil
                             if Player.Character and Player.Character:FindFirstChild("Humanoid") then
                                 Player.Character.Humanoid.WalkSpeed = 16
                             end
@@ -208,7 +211,6 @@ do
                         connections.Fly = RunService.Heartbeat:Connect(function()
                             if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
                                 local root = Player.Character.HumanoidRootPart
-                                local vel = root.Velocity
                                 local newVel = Vector3.new(0, 0, 0)
                                 
                                 if UserInputService:IsKeyDown(Enum.KeyCode.W) then
@@ -236,6 +238,7 @@ do
                     else
                         if connections.Fly then
                             connections.Fly:Disconnect()
+                            connections.Fly = nil
                         end
                         if Player.Character then
                             for _, v in pairs(Player.Character:GetChildren()) do
@@ -257,6 +260,7 @@ do
                     else
                         if connections.Jump then
                             connections.Jump:Disconnect()
+                            connections.Jump = nil
                         end
                     end
                 end},
@@ -275,6 +279,7 @@ do
                     else
                         if connections.Noclip then
                             connections.Noclip:Disconnect()
+                            connections.Noclip = nil
                         end
                     end
                 end},
@@ -292,6 +297,7 @@ do
                     else
                         if connections.AntiVoid then
                             connections.AntiVoid:Disconnect()
+                            connections.AntiVoid = nil
                         end
                     end
                 end},
@@ -307,6 +313,7 @@ do
                     else
                         if connections.Spin then
                             connections.Spin:Disconnect()
+                            connections.Spin = nil
                         end
                     end
                 end}
@@ -341,6 +348,7 @@ do
                     else
                         if connections.Aimbot then
                             connections.Aimbot:Disconnect()
+                            connections.Aimbot = nil
                         end
                     end
                 end},
@@ -379,6 +387,7 @@ do
                     else
                         if connections.Clicker then
                             connections.Clicker:Disconnect()
+                            connections.Clicker = nil
                         end
                     end
                 end},
@@ -480,6 +489,7 @@ do
                     else
                         if connections.AntiAFK then
                             connections.AntiAFK:Disconnect()
+                            connections.AntiAFK = nil
                         end
                     end
                 end},
@@ -490,62 +500,33 @@ do
         end},
         {"⚙️", "Settings", function()
             CreateModuleTab("Settings", {
-                {"UI Color", "color", function(color)
-                    NEON_GREEN = color
-                    Title.TextColor3 = color
-                    -- Обновить другие элементы
-                end},
                 {"Reset All", "button", function()
-                    for name, state in pairs(modules) do
-                        if type(state) == "boolean" then
-                            modules[name] = false
+                    for name, _ in pairs(modules) do
+                        modules[name] = false
+                    end
+                    for name, conn in pairs(connections) do
+                        if conn and typeof(conn) == "RBXScriptConnection" then
+                            conn:Disconnect()
+                            connections[name] = nil
                         end
                     end
+                    print("✅ Все модули отключены")
+                end},
+                {"UI Color", "button", function()
+                    -- Простая смена цвета на случайный
+                    local colors = {
+                        Color3.fromRGB(0, 255, 140), -- зеленый
+                        Color3.fromRGB(0, 200, 255), -- голубой
+                        Color3.fromRGB(255, 100, 0), -- оранжевый
+                        Color3.fromRGB(255, 0, 100)  -- розовый
+                    }
+                    NEON_GREEN = colors[math.random(1, #colors)]
+                    Title.TextColor3 = NEON_GREEN
+                    print("🎨 Цвет UI изменен")
                 end}
             })
         end}
     }
-
-    -- Создание кнопок вкладок
-    for i, tab in ipairs(tabs) do
-        local TabButton = Create("TextButton", {
-            Parent = Sidebar,
-            Size = UDim2.new(1, -10, 0, 60),
-            Position = UDim2.new(0, 5, 0, 10 + (i-1) * 65),
-            BackgroundColor3 = DARK_BG,
-            Text = tab[1] .. "\n" .. tab[2],
-            TextColor3 = GRAY_TEXT,
-            TextSize = 12,
-            Font = Enum.Font.Gotham,
-            TextWrapped = true
-        })
-
-        Create("UICorner", {
-            Parent = TabButton,
-            CornerRadius = UDim.new(0, 6)
-        })
-
-        Create("UIStroke", {
-            Parent = TabButton,
-            Color = Color3.fromRGB(50, 50, 55),
-            Thickness = 1
-        })
-
-        TabButton.MouseButton1Click:Connect(function()
-            tab[3]()
-            for _, btn in pairs(Sidebar:GetChildren()) do
-                if btn:IsA("TextButton") then
-                    Tween(btn, {BackgroundColor3 = DARK_BG, TextColor3 = GRAY_TEXT})
-                end
-            end
-            Tween(TabButton, {BackgroundColor3 = NEON_GREEN, TextColor3 = Color3.fromRGB(0, 0, 0)})
-        end)
-
-        if i == 1 then
-            tab[3]()
-            Tween(TabButton, {BackgroundColor3 = NEON_GREEN, TextColor3 = Color3.fromRGB(0, 0, 0)})
-        end
-    end
 
     -- Функция создания модулей
     function CreateModuleTab(category, moduleList)
@@ -633,7 +614,7 @@ do
 
                 ModuleFrame.MouseButton2Click:Connect(function()
                     -- Открыть дополнительные настройки
-                    print("Дополнительные настройки для: " .. module[1])
+                    print("⚙️ Дополнительные настройки для: " .. module[1])
                 end)
 
             elseif module[2] == "slider" then
@@ -710,7 +691,28 @@ do
 
                 ModuleFrame.MouseButton2Click:Connect(function()
                     -- Открыть дополнительные настройки
-                    print("Доп. настройки слайдера: " .. module[1])
+                    print("⚙️ Доп. настройки слайдера: " .. module[1])
+                end)
+                
+            elseif module[2] == "button" then
+                local ActionButton = Create("TextButton", {
+                    Parent = ModuleFrame,
+                    Size = UDim2.new(0, 100, 0, 30),
+                    Position = UDim2.new(1, -110, 0.5, -15),
+                    BackgroundColor3 = NEON_GREEN,
+                    Text = module[1],
+                    TextColor3 = Color3.fromRGB(0, 0, 0),
+                    TextSize = 12,
+                    Font = Enum.Font.GothamBold
+                })
+
+                Create("UICorner", {
+                    Parent = ActionButton,
+                    CornerRadius = UDim.new(0, 6)
+                })
+
+                ActionButton.MouseButton1Click:Connect(function()
+                    module[3]()
                 end)
             end
 
@@ -758,14 +760,19 @@ do
 end
 
 -- Инициализация
+if Player.Character then
+    -- Персонаж уже существует
+    print("👤 Персонаж найден")
+end
+
 Player.CharacterAdded:Connect(function(character)
-    -- Обновить ссылки на персонажа
+    print("👤 Персонаж загружен")
     task.wait(1)
 end)
 
-print("✅ NeoHax v2.0 loaded!")
-print("📌 Controls:")
-print("  • RightControl - Hide/Show UI")
-print("  • LMB - Toggle modules")
-print("  • RMB - Additional settings")
-print("  • Drag header - Move UI")
+print("✅ NeoHax v2.0 загружен!")
+print("📌 Управление:")
+print("  • RightControl - Скрыть/Показать UI")
+print("  • ЛКМ - Включить/Выключить модуль")
+print("  • ПКМ - Дополнительные настройки")
+print("  • Перетаскивание шапки - Перемещение UI")
