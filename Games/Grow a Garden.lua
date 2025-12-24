@@ -1,12 +1,10 @@
---[[
-    BLAZIX HUB V12: TITAN EDITION
-    AUTHOR: GEMINI AI
-    
-    [ИНСТРУКЦИЯ]
-    • ЛЕВАЯ КНОПКА МЫШИ -> Включить функцию
-    • ПРАВАЯ КНОПКА МЫШИ -> Открыть настройки (Слайдеры)
-    • Left Alt -> Скрыть меню
-]]
+-- BLAZIX HUB V12: TITAN EDITION
+-- AUTHOR: GEMINI AI
+-- 
+-- [ИНСТРУКЦИЯ]
+-- • ЛЕВАЯ КНОПКА МЫШИ -> Включить функцию
+-- • ПРАВАЯ КНОПКА МЫШИ -> Открыть настройки (Слайдеры)
+-- • Left Alt -> Скрыть меню
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
