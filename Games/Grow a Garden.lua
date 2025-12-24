@@ -1,10 +1,12 @@
--- BLAZIX HUB V12: TITAN EDITION
--- AUTHOR: GEMINI AI
--- 
--- [ИНСТРУКЦИЯ]
--- • ЛЕВАЯ КНОПКА МЫШИ -> Включить функцию
--- • ПРАВАЯ КНОПКА МЫШИ -> Открыть настройки (Слайдеры)
--- • Left Alt -> Скрыть меню
+--[[
+    BLAZIX HUB V12: TITAN EDITION
+    AUTHOR: GEMINI AI
+    
+    [ИНСТРУКЦИЯ]
+    • ЛЕВАЯ КНОПКА МЫШИ -> Включить функцию
+    • ПРАВАЯ КНОПКА МЫШИ -> Открыть настройки (Слайдеры)
+    • Right Control -> Скрыть меню
+]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -14,12 +16,6 @@ local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local HttpService = game:GetService("HttpService")
-local MarketplaceService = game:GetService("MarketplaceService")
-
--- Проверка на наличие LocalPlayer
-if not Players.LocalPlayer then
-    repeat task.wait() until Players.LocalPlayer
-end
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -57,58 +53,12 @@ local Config = {
     
     -- Misc
     AntiAFK = true, ChatSpy = false, Rejoin = false,
-    ServerHop = false, Spectate = false, AutoRejoin = false,
+    ServerHop = false, Spectate = false,
     HidePopups = false, NoBillboardAds = false,
     
     -- Player
     NoFall = false, AntiStun = false, AntiSlow = false,
     AntiGrab = false, AntiStomp = false
-}
-
--- Описания функций
-local FunctionDescriptions = {
-    SpeedEnabled = "Увеличивает скорость передвижения персонажа",
-    FlyEnabled = "Позволяет летать в любом направлении",
-    JumpEnabled = "Увеличивает высоту прыжка",
-    InfJump = "Бесконечный прыжок в воздухе",
-    Noclip = "Проходить сквозь стены и объекты",
-    AntiVoid = "Автоматически телепортирует из вакуума",
-    BunnyHop = "Автоматические прыжки при движении",
-    SpinBot = "Вращение персонажа вокруг своей оси",
-    AutoSprint = "Автоматический спринт при движении",
-    Aimbot = "Автоматическое наведение на врагов",
-    Hitbox = "Увеличивает размер хитбоксов врагов",
-    AutoClicker = "Автоматический кликер для быстрой стрельбы",
-    TriggerBot = "Автоматическая стрельба при наведении",
-    SilentAim = "Незаметное наведение на врагов",
-    Reach = "Увеличивает дальность атаки в ближнем бою",
-    ESP_Enabled = "Включить ESP (отображение игроков)",
-    Boxes = "Отображать рамки вокруг игроков",
-    Tracers = "Линии от центра экрана к игрокам",
-    Names = "Показывать имена игроков",
-    Health = "Показывать здоровье игроков",
-    Chams = "Подсветка игроков сквозь стены",
-    FullBright = "Убирает темноту и делает мир ярким",
-    NoFog = "Убирает туман и дымку",
-    Crosshair = "Показывает прицел в центре экрана",
-    FOVCircle = "Круг прицела для аимбота",
-    DestroyLava = "Уничтожает лаву и опасные зоны",
-    LowGfx = "Уменьшает качество графики для FPS",
-    TimeChanger = "Меняет время суток в игре",
-    Gravity = "Изменяет гравитацию мира",
-    XRay = "Видеть сквозь стены и объекты",
-    AntiAFK = "Автоматически предотвращает AFK кик",
-    ChatSpy = "Читает приватные сообщения",
-    Rejoin = "Перезайти на текущий сервер",
-    ServerHop = "Перейти на случайный сервер",
-    Spectate = "Наблюдать за другими игроками",
-    HidePopups = "Убирает всплывающие окна и рекламу",
-    NoBillboardAds = "Убирает рекламные билборды",
-    NoFall = "Нет урона от падения",
-    AutoParry = "Автоматическое парирование атак",
-    Swim = "Плавать в любой жидкости",
-    AutoRejoin = "Авторежойн при дисконнекте",
-    RainbowUI = "Радужная анимация интерфейса"
 }
 
 -- [ UI ЦВЕТА ]
@@ -131,14 +81,12 @@ ScreenGui.Name = "BlazixTitan"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.DisplayOrder = 999999
 
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 900, 0, 650) -- ОГРОМНОЕ ОКНО
 Main.Position = UDim2.new(0.5, -450, 0.5, -325)
 Main.BackgroundColor3 = Colors.Main
 Main.ClipsDescendants = true
-Main.Visible = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 local MainStroke = Instance.new("UIStroke", Main)
 MainStroke.Color = Colors.Accent
@@ -161,20 +109,6 @@ Title.TextSize = 26
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
--- Кнопка скрытия
-local HideBtn = Instance.new("TextButton", Header)
-HideBtn.Size = UDim2.new(0, 40, 0, 40)
-HideBtn.Position = UDim2.new(1, -100, 0.5, -20)
-HideBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-HideBtn.Text = "━"
-HideBtn.TextColor3 = Colors.Text
-HideBtn.Font = Enum.Font.GothamBold
-HideBtn.TextSize = 18
-Instance.new("UICorner", HideBtn).CornerRadius = UDim.new(0, 6)
-HideBtn.MouseButton1Click:Connect(function() 
-    Main.Visible = not Main.Visible 
-end)
-
 local CloseBtn = Instance.new("TextButton", Header)
 CloseBtn.Size = UDim2.new(0, 40, 0, 40)
 CloseBtn.Position = UDim2.new(1, -50, 0.5, -20)
@@ -185,26 +119,6 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 18
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-
--- Панель описания функции
-local DescriptionPanel = Instance.new("Frame", Main)
-DescriptionPanel.Size = UDim2.new(1, 0, 0, 40)
-DescriptionPanel.Position = UDim2.new(0, 0, 1, -120)
-DescriptionPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 40, 0.9)
-DescriptionPanel.BackgroundTransparency = 0.1
-DescriptionPanel.BorderSizePixel = 0
-DescriptionPanel.Visible = false
-Instance.new("UICorner", DescriptionPanel).CornerRadius = UDim.new(0, 8)
-
-local DescriptionText = Instance.new("TextLabel", DescriptionPanel)
-DescriptionText.Size = UDim2.new(1, -20, 1, 0)
-DescriptionText.Position = UDim2.new(0, 10, 0, 0)
-DescriptionText.Text = "Наведите на функцию для описания"
-DescriptionText.TextColor3 = Colors.Text
-DescriptionText.Font = Enum.Font.Gotham
-DescriptionText.TextSize = 14
-DescriptionText.TextXAlignment = Enum.TextXAlignment.Left
-DescriptionText.BackgroundTransparency = 1
 
 -- [ НАВИГАЦИЯ ]
 local Sidebar = Instance.new("Frame", Main)
@@ -221,40 +135,6 @@ TabContainer.ScrollBarThickness = 2
 local TabList = Instance.new("UIListLayout", TabContainer)
 TabList.Padding = UDim.new(0, 5)
 TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- [ ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ ]
-local UserPanel = Instance.new("Frame", Main)
-UserPanel.Size = UDim2.new(0, 200, 0, 80)
-UserPanel.Position = UDim2.new(0, 0, 1, -80)
-UserPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-UserPanel.BorderSizePixel = 0
-
-local UserAvatar = Instance.new("ImageLabel", UserPanel)
-UserAvatar.Size = UDim2.new(0, 50, 0, 50)
-UserAvatar.Position = UDim2.new(0, 10, 0, 15)
-UserAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
-UserAvatar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-Instance.new("UICorner", UserAvatar).CornerRadius = UDim.new(1, 0)
-
-local UserName = Instance.new("TextLabel", UserPanel)
-UserName.Size = UDim2.new(1, -70, 0, 25)
-UserName.Position = UDim2.new(0, 70, 0, 15)
-UserName.Text = LocalPlayer.Name
-UserName.TextColor3 = Colors.Text
-UserName.Font = Enum.Font.GothamBold
-UserName.TextSize = 14
-UserName.TextXAlignment = Enum.TextXAlignment.Left
-UserName.BackgroundTransparency = 1
-
-local UserDisplayName = Instance.new("TextLabel", UserPanel)
-UserDisplayName.Size = UDim2.new(1, -70, 0, 20)
-UserDisplayName.Position = UDim2.new(0, 70, 0, 40)
-UserDisplayName.Text = "@" .. LocalPlayer.DisplayName
-UserDisplayName.TextColor3 = Colors.TextDark
-UserDisplayName.Font = Enum.Font.Gotham
-UserDisplayName.TextSize = 12
-UserDisplayName.TextXAlignment = Enum.TextXAlignment.Left
-UserDisplayName.BackgroundTransparency = 1
 
 -- [ КОНТЕЙНЕР СТРАНИЦ ]
 local PagesContainer = Instance.new("Frame", Main)
@@ -362,20 +242,6 @@ local function AddModule(Page, Name, ConfigKey, HasSettings, SettingsFunc)
         TweenService:Create(ToggleBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
     end)
     
-    -- Ховер для описания
-    Button.MouseEnter:Connect(function()
-        DescriptionPanel.Visible = true
-        if FunctionDescriptions[ConfigKey] then
-            DescriptionText.Text = FunctionDescriptions[ConfigKey]
-        else
-            DescriptionText.Text = "Нет описания для этой функции"
-        end
-    end)
-    
-    Button.MouseLeave:Connect(function()
-        DescriptionPanel.Visible = false
-    end)
-    
     -- Логика ПКМ (Открыть настройки)
     if HasSettings then
         local SettingsFrame = Instance.new("Frame", Wrapper)
@@ -465,6 +331,7 @@ local function CreateColorPicker(Parent, Name, ConfigKeyR, ConfigKeyG, ConfigKey
     RGBText.BackgroundTransparency = 1
     
     ColorPreview.MouseButton1Click:Connect(function()
+        -- Простой выбор цвета (можно улучшить)
         Config[ConfigKeyR] = math.random(0, 255)
         Config[ConfigKeyG] = math.random(0, 255)
         Config[ConfigKeyB] = math.random(0, 255)
@@ -541,7 +408,6 @@ AddModule(TabVisual, "FOV Circle", "FOVCircle", true, function(f)
     CreateSlider(f, "FOV Size", 50, 300, "FOVSize")
 end)
 AddModule(TabVisual, "X-Ray Mode", "XRay", false)
-AddModule(TabVisual, "Rainbow UI", "RainbowUI", false)
 
 -- 4. World Functions
 AddModule(TabWorld, "Gravity Control", "Gravity", true, function(f)
@@ -559,8 +425,6 @@ AddModule(TabWorld, "Low Graphics", "LowGfx", false)
 AddModule(TabMisc, "Anti-AFK", "AntiAFK", false)
 AddModule(TabMisc, "Chat Spy", "ChatSpy", false)
 AddModule(TabMisc, "Rejoin Server", "Rejoin", false)
-AddModule(TabMisc, "Server Hop", "ServerHop", false)
-AddModule(TabMisc, "Auto Rejoin", "AutoRejoin", false)
 AddModule(TabMisc, "Hide All Popups", "HidePopups", false)
 AddModule(TabMisc, "Remove Ads", "NoBillboardAds", false)
 AddModule(TabMisc, "Anti Stun", "AntiStun", false)
@@ -625,7 +489,7 @@ local function ResetConfig()
         NoCollision = false, RemovePhysics = false,
         
         AntiAFK = true, ChatSpy = false, Rejoin = false,
-        ServerHop = false, Spectate = false, AutoRejoin = false,
+        ServerHop = false, Spectate = false,
         HidePopups = false, NoBillboardAds = false,
         
         NoFall = false, AntiStun = false, AntiSlow = false,
@@ -656,56 +520,6 @@ AddSettingButton(TabSettings, "💾 Save Config", SaveConfig)
 AddSettingButton(TabSettings, "📂 Load Config", LoadConfig)
 AddSettingButton(TabSettings, "🔄 Reset Config", ResetConfig)
 
--- Функция Server Hop
-local function ServerHop()
-    local Http = game:GetService("HttpService")
-    local TeleportService = game:GetService("TeleportService")
-    
-    local function GetServers(placeId)
-        local servers = {}
-        local cursor = ""
-        
-        for i = 1, 10 do
-            local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?limit=100&cursor=" .. cursor
-            local success, result = pcall(function()
-                return Http:JSONDecode(game:HttpGet(url))
-            end)
-            
-            if success and result and result.data then
-                for _, server in ipairs(result.data) do
-                    if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                        table.insert(servers, server)
-                    end
-                end
-                cursor = result.nextPageCursor or ""
-                if cursor == "" then break end
-            else
-                break
-            end
-        end
-        
-        return servers
-    end
-    
-    local servers = GetServers(game.PlaceId)
-    if #servers > 0 then
-        local randomServer = servers[math.random(1, #servers)]
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id)
-    else
-        warn("Не найдено доступных серверов")
-    end
-end
-
--- Функция Rejoin
-local function RejoinServer()
-    local TeleportService = game:GetService("TeleportService")
-    TeleportService:Teleport(game.PlaceId)
-end
-
--- Добавляем кнопки Server Hop и Rejoin
-AddModule(TabMisc, "Server Hop", "ServerHop", false)
-AddModule(TabMisc, "Rejoin Server", "Rejoin", false)
-
 -- [ ЛОГИКА СКРИПТА (CORE LOOPS) ]
 
 -- ESP Boxes System
@@ -720,37 +534,11 @@ local function CreateESPBox(player)
     Box.ZIndex = 10
     Box.Parent = ScreenGui
     
-    -- Красивая рамка
     local BoxOutline = Instance.new("Frame", Box)
     BoxOutline.Size = UDim2.new(1, 0, 1, 0)
     BoxOutline.BackgroundTransparency = 1
     BoxOutline.BorderSizePixel = 2
     BoxOutline.BorderColor3 = Color3.fromRGB(Config.BoxColorR, Config.BoxColorG, Config.BoxColorB)
-    BoxOutline.ZIndex = 11
-    
-    local Corner1 = Instance.new("Frame", BoxOutline)
-    Corner1.Size = UDim2.new(0, 10, 0, 10)
-    Corner1.Position = UDim2.new(0, -2, 0, -2)
-    Corner1.BackgroundColor3 = Color3.fromRGB(Config.BoxColorR, Config.BoxColorG, Config.BoxColorB)
-    Corner1.BorderSizePixel = 0
-    
-    local Corner2 = Instance.new("Frame", BoxOutline)
-    Corner2.Size = UDim2.new(0, 10, 0, 10)
-    Corner2.Position = UDim2.new(1, -8, 0, -2)
-    Corner2.BackgroundColor3 = Color3.fromRGB(Config.BoxColorR, Config.BoxColorG, Config.BoxColorB)
-    Corner2.BorderSizePixel = 0
-    
-    local Corner3 = Instance.new("Frame", BoxOutline)
-    Corner3.Size = UDim2.new(0, 10, 0, 10)
-    Corner3.Position = UDim2.new(0, -2, 1, -8)
-    Corner3.BackgroundColor3 = Color3.fromRGB(Config.BoxColorR, Config.BoxColorG, Config.BoxColorB)
-    Corner3.BorderSizePixel = 0
-    
-    local Corner4 = Instance.new("Frame", BoxOutline)
-    Corner4.Size = UDim2.new(0, 10, 0, 10)
-    Corner4.Position = UDim2.new(1, -8, 1, -8)
-    Corner4.BackgroundColor3 = Color3.fromRGB(Config.BoxColorR, Config.BoxColorG, Config.BoxColorB)
-    Corner4.BorderSizePixel = 0
     
     local NameLabel = Instance.new("TextLabel", Box)
     NameLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -760,19 +548,16 @@ local function CreateESPBox(player)
     NameLabel.BackgroundTransparency = 1
     NameLabel.Font = Enum.Font.GothamBold
     NameLabel.TextSize = 14
-    NameLabel.ZIndex = 12
     
     local HealthBar = Instance.new("Frame", Box)
     HealthBar.Size = UDim2.new(0, 5, 1, -4)
     HealthBar.Position = UDim2.new(0, -8, 0, 2)
     HealthBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    HealthBar.ZIndex = 11
     
     local HealthFill = Instance.new("Frame", HealthBar)
     HealthFill.Size = UDim2.new(1, 0, player.Character.Humanoid.Health/player.Character.Humanoid.MaxHealth, 0)
     HealthFill.Position = UDim2.new(0, 0, 1, -HealthFill.Size.Y.Scale)
     HealthFill.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
-    HealthFill.ZIndex = 12
     
     ESPObjects[player] = {
         Box = Box,
@@ -816,7 +601,7 @@ local function UpdateESP()
 end
 
 -- Movement Logic
-local movementConnection = RunService.Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(function()
     local Char = LocalPlayer.Character
     if not Char or not Char:FindFirstChild("Humanoid") then return end
     
@@ -872,13 +657,6 @@ local movementConnection = RunService.Heartbeat:Connect(function()
         if HRP.Velocity.Y < -50 then
             HRP.Velocity = Vector3.new(HRP.Velocity.X, -10, HRP.Velocity.Z)
         end
-    end
-    
-    -- Auto Sprint
-    if Config.AutoSprint and Hum.MoveDirection.Magnitude > 0 then
-        Hum.WalkSpeed = 20
-    elseif not Config.SpeedEnabled then
-        Hum.WalkSpeed = 16
     end
 end)
 
@@ -980,12 +758,10 @@ task.spawn(function()
             Lighting.FogEnd = 100000
         end
         
-        -- Hide Popups
+        -- Hide Popups (удаляем всплывающие окна)
         if Config.HidePopups then
             for _, gui in pairs(CoreGui:GetChildren()) do
-                if gui:IsA("ScreenGui") and (gui.Name:find("Prompt") or gui.Name:find("Popup") or 
-                   gui.Name:find("Notification") or gui.Name:find("Ad") or 
-                   gui.Name:find("Purchase") or gui.Name:find("PurchasePrompt")) then
+                if gui:IsA("ScreenGui") and (gui.Name:find("Prompt") or gui.Name:find("Popup") or gui.Name:find("Notification")) then
                     gui:Destroy()
                 end
             end
@@ -1010,33 +786,6 @@ LocalPlayer.Idled:Connect(function()
         VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,0)
         task.wait(0.1)
         VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0)
-    end
-end)
-
--- Auto Rejoin при дисконнекте
-task.spawn(function()
-    while task.wait(5) do
-        if Config.AutoRejoin then
-            if not game:GetService("Players").LocalPlayer then
-                task.wait(3)
-                RejoinServer()
-            end
-        end
-    end
-end)
-
--- Обработка кнопок Server Hop и Rejoin
-task.spawn(function()
-    while task.wait(0.5) do
-        if Config.ServerHop then
-            Config.ServerHop = false
-            ServerHop()
-        end
-        
-        if Config.Rejoin then
-            Config.Rejoin = false
-            RejoinServer()
-        end
     end
 end)
 
@@ -1066,84 +815,17 @@ Pages["Combat"].Page.Visible = true
 Pages["Combat"].Btn.TextColor3 = Colors.Text
 Pages["Combat"].Btn.BackgroundColor3 = Colors.ItemBG
 
--- Keybind to Hide (Left Alt)
+-- Keybind to Hide
 UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftAlt then
+    if input.KeyCode == Enum.KeyCode.RightControl then
         Main.Visible = not Main.Visible
     end
 end)
 
 print("🔥 Blazix Titan v12 loaded successfully!")
 print("📌 Features:")
-print("   • Advanced ESP with beautiful boxes (угловые рамки)")
-print("   • 45+ functions in 6 categories")
+print("   • Advanced ESP with beautiful boxes")
+print("   • 40+ functions in 6 categories")
 print("   • Config save/load system")
-print("   • User info panel with avatar")
-print("   • Function descriptions on hover")
-print("   • Server Hop & Auto Rejoin")
-print("   • Left Alt to hide/show")
-print("   • Hide button in header")
-
--- Уведомление о запуске
-task.spawn(function()
-    task.wait(0.5)
-    
-    local NotificationGui = Instance.new("ScreenGui")
-    NotificationGui.Name = "StartNotification"
-    NotificationGui.Parent = ScreenGui.Parent
-    NotificationGui.DisplayOrder = 1000000
-    
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 300, 0, 80)
-    MainFrame.Position = UDim2.new(1, -320, 1, -100)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Parent = NotificationGui
-    
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-    
-    local AccentBar = Instance.new("Frame")
-    AccentBar.Size = UDim2.new(0, 5, 1, 0)
-    AccentBar.BackgroundColor3 = Color3.fromRGB(0, 255, 140)
-    AccentBar.BorderSizePixel = 0
-    AccentBar.Parent = MainFrame
-    
-    Instance.new("UICorner", AccentBar).CornerRadius = UDim.new(0, 10)
-    
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, -20, 0, 25)
-    TitleLabel.Position = UDim2.new(0, 15, 0, 10)
-    TitleLabel.Text = "BLAZIX TITAN v12"
-    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.TextSize = 16
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Parent = MainFrame
-    
-    local MessageLabel = Instance.new("TextLabel")
-    MessageLabel.Size = UDim2.new(1, -20, 0, 40)
-    MessageLabel.Position = UDim2.new(0, 15, 0, 35)
-    MessageLabel.Text = "Blazix Hub successfully loaded!\nPress Left Alt to hide/show menu."
-    MessageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    MessageLabel.Font = Enum.Font.Gotham
-    MessageLabel.TextSize = 14
-    MessageLabel.TextXAlignment = Enum.TextXAlignment.Left
-    MessageLabel.TextYAlignment = Enum.TextYAlignment.Top
-    MessageLabel.BackgroundTransparency = 1
-    MessageLabel.Parent = MainFrame
-    
-    -- Анимация
-    MainFrame.Position = UDim2.new(1, 350, 1, -100)
-    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(1, -320, 1, -100)
-    }):Play()
-    
-    -- Закрытие
-    task.wait(5)
-    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        Position = UDim2.new(1, 350, 1, -100)
-    }):Play()
-    task.wait(0.5)
-    NotificationGui:Destroy()
-end)
+print("   • Popup remover & ad blocker")
+print("   • Right Control to hide/show")
