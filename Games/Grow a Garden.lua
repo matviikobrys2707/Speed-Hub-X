@@ -18,6 +18,7 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local TeleportService = game:GetService("TeleportService")
+local TextChatService = game:GetService("TextChatService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -34,6 +35,96 @@ if not LocalPlayer then
 end
 
 print("🚀 Загрузка Blazix Titan v12...")
+
+-- [ СОЗДАНИЕ УВЕДОМЛЕНИЯ О ЗАПУСКЕ ]
+local function CreateNotification(title, message, duration)
+    local NotificationGui = Instance.new("ScreenGui")
+    NotificationGui.Name = "BlazixNotification"
+    NotificationGui.Parent = CoreGui
+    NotificationGui.ResetOnSpawn = false
+    NotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 300, 0, 80)
+    MainFrame.Position = UDim2.new(1, -320, 1, -100)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = NotificationGui
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+    
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Size = UDim2.new(0, 5, 1, 0)
+    AccentBar.BackgroundColor3 = Color3.fromRGB(0, 255, 140)
+    AccentBar.BorderSizePixel = 0
+    AccentBar.Parent = MainFrame
+    Instance.new("UICorner", AccentBar).CornerRadius = UDim.new(0, 10)
+    
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, -20, 0, 25)
+    TitleLabel.Position = UDim2.new(0, 15, 0, 10)
+    TitleLabel.Text = title
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 16
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Parent = MainFrame
+    
+    local MessageLabel = Instance.new("TextLabel")
+    MessageLabel.Size = UDim2.new(1, -20, 0, 40)
+    MessageLabel.Position = UDim2.new(0, 15, 0, 35)
+    MessageLabel.Text = message
+    MessageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    MessageLabel.Font = Enum.Font.Gotham
+    MessageLabel.TextSize = 14
+    MessageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    MessageLabel.TextYAlignment = Enum.TextYAlignment.Top
+    MessageLabel.BackgroundTransparency = 1
+    MessageLabel.Parent = MainFrame
+    
+    local Icon = Instance.new("ImageLabel")
+    Icon.Size = UDim2.new(0, 40, 0, 40)
+    Icon.Position = UDim2.new(1, -50, 0.5, -20)
+    Icon.Image = "rbxassetid://3926305904"
+    Icon.ImageRectOffset = Vector2.new(964, 324)
+    Icon.ImageRectSize = Vector2.new(36, 36)
+    Icon.ImageColor3 = Color3.fromRGB(0, 255, 140)
+    Icon.BackgroundTransparency = 1
+    Icon.Parent = MainFrame
+    
+    -- Анимация появления
+    MainFrame.Position = UDim2.new(1, 350, 1, -100)
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -320, 1, -100)
+    }):Play()
+    
+    -- Автоматическое закрытие
+    task.spawn(function()
+        task.wait(duration or 5)
+        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 350, 1, -100)
+        }):Play()
+        task.wait(0.5)
+        NotificationGui:Destroy()
+    end)
+    
+    -- Закрытие по клику
+    MainFrame.MouseButton1Click:Connect(function()
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 350, 1, -100)
+        }):Play()
+        task.wait(0.3)
+        NotificationGui:Destroy()
+    end)
+    
+    return NotificationGui
+end
+
+-- Показываем уведомление о запуске
+task.spawn(function()
+    task.wait(0.5)
+    CreateNotification("BLAZIX TITAN v12", "Blazix Hub successfully loaded!\nPress Left Alt to hide/show menu.", 7)
+end)
 
 -- [ КОНФИГУРАЦИЯ / СОХРАНЕНИЕ НАСТРОЕК ]
 local Config = {
@@ -185,6 +276,7 @@ Instance.new("UICorner", HideBtn).CornerRadius = UDim.new(0, 6)
 HideBtn.MouseButton1Click:Connect(function() 
     Main.Visible = not Main.Visible 
     print("📌 Меню: " .. (Main.Visible and "Показано" or "Скрыто"))
+    CreateNotification("BLAZIX TITAN", "Menu " .. (Main.Visible and "shown" or "hidden") .. "!", 2)
 end)
 
 local CloseBtn = Instance.new("TextButton", Header)
@@ -199,6 +291,7 @@ Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 CloseBtn.MouseButton1Click:Connect(function() 
     ScreenGui:Destroy() 
     print("❌ Меню закрыто")
+    CreateNotification("BLAZIX TITAN", "Hub closed!", 3)
 end)
 
 -- Панель описания функции
@@ -377,6 +470,11 @@ local function AddModule(Page, Name, ConfigKey, HasSettings, SettingsFunc)
         TweenService:Create(ToggleBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
         
         print("🔧 " .. Name .. ": " .. (Config[ConfigKey] and "Включено" or "Выключено"))
+        
+        -- Уведомление для важных функций
+        if ConfigKey == "ESP_Enabled" or ConfigKey == "Aimbot" or ConfigKey == "FlyEnabled" then
+            CreateNotification(Name, (Config[ConfigKey] and "ENABLED" or "DISABLED"), 2)
+        end
     end)
     
     -- Ховер для описания
@@ -590,9 +688,11 @@ local function SaveConfig()
         local json = HttpService:JSONEncode(Config)
         writefile("blazix_config.json", json)
         print("✅ Конфиг сохранен!")
+        CreateNotification("SETTINGS", "Config saved successfully!", 3)
     end)
     if not success then
         print("❌ Ошибка сохранения:", result)
+        CreateNotification("ERROR", "Failed to save config!", 3)
     end
 end
 
@@ -605,12 +705,15 @@ local function LoadConfig()
                 Config[k] = v
             end
             print("✅ Конфиг загружен!")
+            CreateNotification("SETTINGS", "Config loaded successfully!", 3)
         else
             print("⚠️ Файл конфига не найден!")
+            CreateNotification("SETTINGS", "Config file not found!", 3)
         end
     end)
     if not success then
         print("❌ Ошибка загрузки:", result)
+        CreateNotification("ERROR", "Failed to load config!", 3)
     end
 end
 
@@ -653,6 +756,7 @@ local function ResetConfig()
         Config[k] = v
     end
     print("✅ Конфиг сброшен к значениям по умолчанию!")
+    CreateNotification("SETTINGS", "Config reset to default!", 3)
 end
 
 -- Кнопки настроек
@@ -679,6 +783,8 @@ AddSettingButton(TabSettings, "🔄 Reset Config", ResetConfig)
 -- Функция Server Hop
 local function ServerHop()
     print("🌐 Попытка Server Hop...")
+    CreateNotification("SERVER", "Searching for servers...", 3)
+    
     local Http = game:GetService("HttpService")
     
     local servers = {}
@@ -705,10 +811,12 @@ local function ServerHop()
     
     if #servers > 0 then
         local randomServer = servers[math.random(1, #servers)]
+        CreateNotification("SERVER", "Joining new server...", 2)
         TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id)
         print("🌐 Переход на сервер " .. randomServer.id)
     else
         warn("❌ Не найдено доступных серверов")
+        CreateNotification("SERVER", "No servers found!", 3)
         TeleportService:Teleport(game.PlaceId)
     end
 end
@@ -716,6 +824,7 @@ end
 -- Функция Rejoin
 local function RejoinServer()
     print("🔄 Rejoin Server...")
+    CreateNotification("SERVER", "Rejoining server...", 2)
     TeleportService:Teleport(game.PlaceId)
 end
 
@@ -1039,6 +1148,7 @@ task.spawn(function()
         if Config.AutoRejoin then
             if not Players.LocalPlayer then
                 print("🔌 Обнаружен дисконнект, переподключаюсь...")
+                CreateNotification("SYSTEM", "Reconnecting...", 3)
                 task.wait(3)
                 RejoinServer()
             end
@@ -1096,23 +1206,40 @@ UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftAlt then
         Main.Visible = not Main.Visible
         print("🔑 Left Alt: Меню " .. (Main.Visible and "показано" or "скрыто"))
+        CreateNotification("BLAZIX TITAN", "Menu " .. (Main.Visible and "shown" or "hidden") .. "!", 2)
     end
 end)
 
 -- Принудительно показываем меню после загрузки
 task.wait(1) -- Ждём немного для стабилизации
 Main.Visible = true
+
+-- Уведомление в чат (опционально)
+task.spawn(function()
+    task.wait(2)
+    if TextChatService and TextChatService.TextChannels and TextChatService.TextChannels.RBXGeneral then
+        pcall(function()
+            TextChatService.TextChannels.RBXGeneral:SendAsync("🔓 Blazix Titan v12 successfully loaded!")
+        end)
+    elseif game:GetService("StarterGui") then
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
+                Text = "🔓 Blazix Titan v12 successfully loaded!",
+                Color = Color3.fromRGB(0, 255, 140),
+                Font = Enum.Font.GothamBold,
+                TextSize = 18
+            })
+        end)
+    end
+end)
+
 print("✅ Blazix Titan v12 успешно загружен!")
 print("📌 Меню должно быть видно на экране")
 print("📌 Используйте Left Alt для скрытия/показа")
 print("📌 Используйте кнопку '━' в шапке для скрытия")
 
--- Уведомление в чат (опционально)
+-- Показываем уведомление о готовности
 task.spawn(function()
-    task.wait(2)
-    if game:GetService("TextChatService") then
-        pcall(function()
-            game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("🔓 Blazix Titan v12 активирован!")
-        end)
-    end
+    task.wait(1.5)
+    CreateNotification("BLAZIX TITAN", "Ready to use!\nLeft Alt - Hide/Show", 5)
 end)
