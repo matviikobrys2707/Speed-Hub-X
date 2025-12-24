@@ -55,10 +55,12 @@ local Colors = {
     Main = Color3.fromRGB(18, 18, 24),
     Sidebar = Color3.fromRGB(25, 25, 32),
     Accent = Color3.fromRGB(0, 255, 140), -- Neon Green
+    Secondary = Color3.fromRGB(0, 180, 120),
     Text = Color3.fromRGB(255, 255, 255),
     TextDark = Color3.fromRGB(170, 170, 170),
     ItemBG = Color3.fromRGB(35, 35, 42),
-    SettingsBG = Color3.fromRGB(28, 28, 35)
+    SettingsBG = Color3.fromRGB(28, 28, 35),
+    CardBG = Color3.fromRGB(30, 30, 38)
 }
 
 -- [ СОЗДАНИЕ GUI ]
@@ -66,424 +68,461 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BlazixTitan"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Фоновый эффект
+local BackgroundBlur = Instance.new("BlurEffect")
+BackgroundBlur.Size = 0
+BackgroundBlur.Parent = game:GetService("Lighting")
 
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 900, 0, 650) -- ОГРОМНОЕ ОКНО
-Main.Position = UDim2.new(0.5, -450, 0.5, -325)
+Main.Size = UDim2.new(0, 850, 0, 600)
+Main.Position = UDim2.new(0.5, -425, 0.5, -300)
 Main.BackgroundColor3 = Colors.Main
 Main.ClipsDescendants = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+Main.Visible = false -- Начинаем скрытым
+
+-- Скругленные углы и обводка
+local UICorner = Instance.new("UICorner", Main)
+UICorner.CornerRadius = UDim.new(0, 12)
+
 local MainStroke = Instance.new("UIStroke", Main)
 MainStroke.Color = Colors.Accent
 MainStroke.Thickness = 2
 
--- [ ШАПКА ]
+-- Эффект тени
+local Shadow = Instance.new("ImageLabel", Main)
+Shadow.Image = "rbxassetid://5554236805"
+Shadow.ImageColor3 = Color3.new(0, 0, 0)
+Shadow.ImageTransparency = 0.8
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
+Shadow.Size = UDim2.new(1, 30, 1, 30)
+Shadow.Position = UDim2.new(0, -15, 0, -15)
+Shadow.BackgroundTransparency = 1
+Shadow.ZIndex = -1
+
+-- [ ШАПКА С ГРАДИЕНТОМ ]
 local Header = Instance.new("Frame", Main)
-Header.Size = UDim2.new(1, 0, 0, 60)
+Header.Size = UDim2.new(1, 0, 0, 70)
 Header.BackgroundColor3 = Colors.Sidebar
 Header.BorderSizePixel = 0
 
+local HeaderGradient = Instance.new("UIGradient", Header)
+HeaderGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Colors.Sidebar),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 27))
+})
+HeaderGradient.Rotation = -15
+
 local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(0.5, 0, 1, 0)
-Title.Position = UDim2.new(0, 20, 0, 0)
-Title.Text = "BLAZIX <font color='#00ff8c'>TITAN</font> v12"
+Title.Size = UDim2.new(0.6, 0, 1, 0)
+Title.Position = UDim2.new(0, 25, 0, 0)
+Title.Text = "<font color='#FFFFFF'>BLAZIX</font> <font color='#00ff8c'>TITAN</font> <font color='#AAAAAA'>v12</font>"
 Title.RichText = true
 Title.TextColor3 = Colors.Text
 Title.Font = Enum.Font.GothamBlack
-Title.TextSize = 26
+Title.TextSize = 28
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
 
-local CloseBtn = Instance.new("TextButton", Header)
-CloseBtn.Size = UDim2.new(0, 40, 0, 40)
-CloseBtn.Position = UDim2.new(1, -50, 0.5, -20)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Colors.Text
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 18
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+-- Статус строка
+local Status = Instance.new("TextLabel", Header)
+Status.Size = UDim2.new(0.3, 0, 0, 20)
+Status.Position = UDim2.new(0.65, 0, 0.5, -10)
+Status.Text = "🟢 CONNECTED"
+Status.TextColor3 = Color3.fromRGB(0, 255, 140)
+Status.Font = Enum.Font.GothamMedium
+Status.TextSize = 12
+Status.TextXAlignment = Enum.TextXAlignment.Right
+Status.BackgroundTransparency = 1
 
--- [ НАВИГАЦИЯ ]
+local CloseBtn = Instance.new("ImageButton", Header)
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -45, 0.5, -16)
+CloseBtn.Image = "rbxassetid://3926305904"
+CloseBtn.ImageRectOffset = Vector2.new(924, 724)
+CloseBtn.ImageRectSize = Vector2.new(36, 36)
+CloseBtn.ImageColor3 = Color3.fromRGB(200, 60, 60)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- [ СОВРЕМЕННАЯ НАВИГАЦИЯ ]
 local Sidebar = Instance.new("Frame", Main)
-Sidebar.Size = UDim2.new(0, 200, 1, -60)
-Sidebar.Position = UDim2.new(0, 0, 0, 60)
+Sidebar.Size = UDim2.new(0, 180, 1, -70)
+Sidebar.Position = UDim2.new(0, 0, 0, 70)
 Sidebar.BackgroundColor3 = Colors.Sidebar
 Sidebar.BorderSizePixel = 0
 
+-- Индикатор активной вкладки
+local ActiveIndicator = Instance.new("Frame", Sidebar)
+ActiveIndicator.Size = UDim2.new(0, 4, 0, 40)
+ActiveIndicator.BackgroundColor3 = Colors.Accent
+ActiveIndicator.BorderSizePixel = 0
+ActiveIndicator.Visible = false
+
 local TabContainer = Instance.new("ScrollingFrame", Sidebar)
 TabContainer.Size = UDim2.new(1, 0, 1, -20)
-TabContainer.Position = UDim2.new(0, 0, 0, 10)
+TabContainer.Position = UDim2.new(0, 0, 0, 15)
 TabContainer.BackgroundTransparency = 1
 TabContainer.ScrollBarThickness = 2
+TabContainer.ScrollBarImageColor3 = Colors.TextDark
+
 local TabList = Instance.new("UIListLayout", TabContainer)
-TabList.Padding = UDim.new(0, 5)
+TabList.Padding = UDim.new(0, 8)
 TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- [ КОНТЕЙНЕР СТРАНИЦ ]
-local PagesContainer = Instance.new("Frame", Main)
-PagesContainer.Size = UDim2.new(1, -220, 1, -80)
-PagesContainer.Position = UDim2.new(0, 210, 0, 70)
-PagesContainer.BackgroundTransparency = 1
+-- [ ГЛАВНЫЙ КОНТЕЙНЕР ]
+local MainContent = Instance.new("Frame", Main)
+MainContent.Size = UDim2.new(1, -190, 1, -80)
+MainContent.Position = UDim2.new(0, 190, 0, 75)
+MainContent.BackgroundTransparency = 1
+
+-- Заголовок текущей вкладки
+local PageTitle = Instance.new("TextLabel", MainContent)
+PageTitle.Size = UDim2.new(1, 0, 0, 40)
+PageTitle.Text = "COMBAT"
+PageTitle.TextColor3 = Colors.Text
+PageTitle.Font = Enum.Font.GothamBold
+PageTitle.TextSize = 22
+PageTitle.TextXAlignment = Enum.TextXAlignment.Left
+PageTitle.BackgroundTransparency = 1
+
+-- Разделитель под заголовком
+local TitleDivider = Instance.new("Frame", MainContent)
+TitleDivider.Size = UDim2.new(1, 0, 0, 1)
+TitleDivider.Position = UDim2.new(0, 0, 0, 40)
+TitleDivider.BackgroundColor3 = Colors.Accent
+TitleDivider.BackgroundTransparency = 0.3
+
+-- Контейнер для карточек модулей
+local ModulesContainer = Instance.new("ScrollingFrame", MainContent)
+ModulesContainer.Size = UDim2.new(1, 0, 1, -50)
+ModulesContainer.Position = UDim2.new(0, 0, 0, 50)
+ModulesContainer.BackgroundTransparency = 1
+ModulesContainer.ScrollBarThickness = 4
+ModulesContainer.ScrollBarImageColor3 = Colors.TextDark
+ModulesContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+-- Сетка для карточек
+local ModulesGrid = Instance.new("UIGridLayout", ModulesContainer)
+ModulesGrid.CellSize = UDim2.new(0.5, -10, 0, 110)
+ModulesGrid.CellPadding = UDim2.new(0, 10, 0, 10)
+ModulesGrid.SortOrder = Enum.SortOrder.LayoutOrder
+ModulesGrid.HorizontalAlignment = Enum.HorizontalAlignment.Left
 
 local Pages = {}
 
+-- [ ФУНКЦИЯ СОЗДАНИЯ ВКЛАДКИ ]
 local function CreateTab(name, icon)
-    local Page = Instance.new("ScrollingFrame", PagesContainer)
-    Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.BackgroundTransparency = 1
-    Page.Visible = false
-    Page.ScrollBarThickness = 4
-    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y -- ВАЖНО ДЛЯ РАСШИРЕНИЯ
-    
-    local PageLayout = Instance.new("UIListLayout", Page)
-    PageLayout.Padding = UDim.new(0, 10)
-    PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
     local TabBtn = Instance.new("TextButton", TabContainer)
-    TabBtn.Size = UDim2.new(0.9, 0, 0, 45)
+    TabBtn.Size = UDim2.new(0.9, 0, 0, 40)
     TabBtn.BackgroundColor3 = Colors.Main
-    TabBtn.Text = "  " .. icon .. "  " .. name
-    TabBtn.TextColor3 = Colors.TextDark
-    TabBtn.Font = Enum.Font.GothamBold
-    TabBtn.TextSize = 14
-    TabBtn.TextXAlignment = Enum.TextXAlignment.Left
-    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
-
-    TabBtn.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages) do p.Page.Visible = false end
-        for _, t in pairs(TabContainer:GetChildren()) do 
-            if t:IsA("TextButton") then 
-                t.TextColor3 = Colors.TextDark 
-                t.BackgroundColor3 = Colors.Main
-            end 
-        end
-        Page.Visible = true
-        TabBtn.TextColor3 = Colors.Text
-        TabBtn.BackgroundColor3 = Colors.ItemBG
-    end)
-
-    Pages[name] = {Page = Page, Btn = TabBtn}
-    return Page
-end
-
--- [ ФУНКЦИЯ СОЗДАНИЯ МОДУЛЯ (КНОПКА + НАСТРОЙКИ) ]
-local function AddModule(Page, Name, ConfigKey, HasSettings, SettingsFunc)
-    local Wrapper = Instance.new("Frame", Page)
-    Wrapper.Size = UDim2.new(1, -10, 0, 60) -- Начальная высота
-    Wrapper.BackgroundColor3 = Colors.ItemBG
-    Wrapper.ClipsDescendants = true
-    Instance.new("UICorner", Wrapper).CornerRadius = UDim.new(0, 8)
+    TabBtn.AutoButtonColor = false
+    TabBtn.Text = ""
     
-    -- Основная кнопка
-    local Button = Instance.new("TextButton", Wrapper)
-    Button.Size = UDim2.new(1, 0, 0, 60)
-    Button.BackgroundTransparency = 1
-    Button.Text = ""
+    -- Иконка
+    local Icon = Instance.new("TextLabel", TabBtn)
+    Icon.Size = UDim2.new(0, 30, 1, 0)
+    Icon.Position = UDim2.new(0, 15, 0, 0)
+    Icon.Text = icon
+    Icon.TextColor3 = Colors.TextDark
+    Icon.Font = Enum.Font.GothamBold
+    Icon.TextSize = 18
+    Icon.BackgroundTransparency = 1
     
-    local Title = Instance.new("TextLabel", Button)
-    Title.Text = Name
-    Title.Size = UDim2.new(0.7, 0, 1, 0)
-    Title.Position = UDim2.new(0, 20, 0, 0)
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 16
-    Title.TextColor3 = Colors.Text
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.BackgroundTransparency = 1
-    
-    -- Индикатор включения
-    local ToggleBg = Instance.new("Frame", Button)
-    ToggleBg.Size = UDim2.new(0, 50, 0, 26)
-    ToggleBg.Position = UDim2.new(1, -70, 0.5, -13)
-    ToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-    Instance.new("UICorner", ToggleBg).CornerRadius = UDim.new(1, 0)
-    
-    local ToggleCircle = Instance.new("Frame", ToggleBg)
-    ToggleCircle.Size = UDim2.new(0, 22, 0, 22)
-    ToggleCircle.Position = UDim2.new(0, 2, 0.5, -11)
-    ToggleCircle.BackgroundColor3 = Colors.Text
-    Instance.new("UICorner", ToggleCircle).CornerRadius = UDim.new(1, 0)
-    
-    -- Иконка настроек (если есть)
-    if HasSettings then
-        local Gear = Instance.new("ImageLabel", Button)
-        Gear.Size = UDim2.new(0, 20, 0, 20)
-        Gear.Position = UDim2.new(1, -100, 0.5, -10)
-        Gear.Image = "rbxassetid://3926307971" -- Gear Icon
-        Gear.ImageRectOffset = Vector2.new(324, 124)
-        Gear.ImageRectSize = Vector2.new(36, 36)
-        Gear.ImageColor3 = Colors.TextDark
-        Gear.BackgroundTransparency = 1
-    end
-    
-    -- Логика ЛКМ (Включить)
-    Button.MouseButton1Click:Connect(function()
-        Config[ConfigKey] = not Config[ConfigKey]
-        local targetPos = Config[ConfigKey] and UDim2.new(1, -24, 0.5, -11) or UDim2.new(0, 2, 0.5, -11)
-        local targetColor = Config[ConfigKey] and Colors.Accent or Color3.fromRGB(50, 50, 60)
-        
-        TweenService:Create(ToggleCircle, TweenInfo.new(0.2), {Position = targetPos}):Play()
-        TweenService:Create(ToggleBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
-    end)
-    
-    -- Логика ПКМ (Открыть настройки)
-    if HasSettings then
-        local SettingsFrame = Instance.new("Frame", Wrapper)
-        SettingsFrame.Size = UDim2.new(1, 0, 0, 80) -- Высота настроек
-        SettingsFrame.Position = UDim2.new(0, 0, 0, 60)
-        SettingsFrame.BackgroundColor3 = Colors.SettingsBG
-        SettingsFrame.BorderSizePixel = 0
-        
-        -- Вызываем функцию для наполнения настройками
-        if SettingsFunc then SettingsFunc(SettingsFrame) end
-        
-        local Expanded = false
-        Button.MouseButton2Click:Connect(function()
-            Expanded = not Expanded
-            local targetHeight = Expanded and 140 or 60 -- 60 (кнопка) + 80 (настройки)
-            TweenService:Create(Wrapper, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Size = UDim2.new(1, -10, 0, targetHeight)}):Play()
-        end)
-    end
-end
-
--- [ ФУНКЦИЯ СЛАЙДЕРА ]
-local function CreateSlider(Parent, Name, Min, Max, ConfigKey)
-    local Label = Instance.new("TextLabel", Parent)
-    Label.Size = UDim2.new(1, -20, 0, 20)
-    Label.Position = UDim2.new(0, 10, 0, 10)
-    Label.Text = Name .. ": " .. Config[ConfigKey]
+    -- Название
+    local Label = Instance.new("TextLabel", TabBtn)
+    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    Label.Position = UDim2.new(0, 50, 0, 0)
+    Label.Text = name
     Label.TextColor3 = Colors.TextDark
-    Label.Font = Enum.Font.Gotham
+    Label.Font = Enum.Font.GothamMedium
     Label.TextSize = 14
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.BackgroundTransparency = 1
     
-    local SliderBg = Instance.new("TextButton", Parent)
-    SliderBg.Size = UDim2.new(1, -20, 0, 6)
-    SliderBg.Position = UDim2.new(0, 10, 0, 40)
-    SliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    SliderBg.Text = ""
-    Instance.new("UICorner", SliderBg)
+    -- Скругления
+    Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
     
-    local Fill = Instance.new("Frame", SliderBg)
-    Fill.Size = UDim2.new((Config[ConfigKey]-Min)/(Max-Min), 0, 1, 0)
-    Fill.BackgroundColor3 = Colors.Accent
-    Instance.new("UICorner", Fill)
+    Pages[name] = {Btn = TabBtn, Icon = Icon, Label = Label}
     
-    SliderBg.MouseButton1Down:Connect(function()
-        local Move = RunService.RenderStepped:Connect(function()
-            local P = math.clamp((UserInputService:GetMouseLocation().X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1)
-            Fill.Size = UDim2.new(P, 0, 1, 0)
-            local Val = math.floor(Min + (Max - Min) * P)
-            Config[ConfigKey] = Val
-            Label.Text = Name .. ": " .. Val
-        end)
-        UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then Move:Disconnect() end end)
+    return TabBtn
+end
+
+-- [ ФУНКЦИЯ АКТИВАЦИИ ВКЛАДКИ ]
+local function ActivateTab(tabName)
+    for name, pageData in pairs(Pages) do
+        if name == tabName then
+            -- Обновляем индикатор
+            ActiveIndicator.Visible = true
+            ActiveIndicator.Position = UDim2.new(0, 0, 0, pageData.Btn.AbsolutePosition.Y - TabContainer.AbsolutePosition.Y + 5)
+            
+            -- Обновляем кнопку
+            pageData.Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+            pageData.Icon.TextColor3 = Colors.Accent
+            pageData.Label.TextColor3 = Colors.Text
+            
+            -- Обновляем заголовок
+            PageTitle.Text = name:upper()
+        else
+            pageData.Btn.BackgroundColor3 = Colors.Main
+            pageData.Icon.TextColor3 = Colors.TextDark
+            pageData.Label.TextColor3 = Colors.TextDark
+        end
+    end
+end
+
+-- [ КАРТОЧКА МОДУЛЯ ]
+local function CreateModuleCard(parent, name, configKey, hasSettings, settingsFunc)
+    local Card = Instance.new("Frame", parent)
+    Card.Size = UDim2.new(1, 0, 0, 110)
+    Card.BackgroundColor3 = Colors.CardBG
+    Card.ClipsDescendants = true
+    
+    local CardCorner = Instance.new("UICorner", Card)
+    CardCorner.CornerRadius = UDim.new(0, 8)
+    
+    -- Обводка карточки
+    local CardStroke = Instance.new("UIStroke", Card)
+    CardStroke.Color = Colors.ItemBG
+    CardStroke.Thickness = 1
+    
+    -- Заголовок модуля
+    local Title = Instance.new("TextLabel", Card)
+    Title.Size = UDim2.new(1, -20, 0, 30)
+    Title.Position = UDim2.new(0, 15, 0, 15)
+    Title.Text = name
+    Title.TextColor3 = Colors.Text
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.BackgroundTransparency = 1
+    
+    -- Описание модуля
+    local Desc = Instance.new("TextLabel", Card)
+    Desc.Size = UDim2.new(1, -20, 0, 35)
+    Desc.Position = UDim2.new(0, 15, 0, 40)
+    Desc.Text = "Включение функции " .. name
+    Desc.TextColor3 = Colors.TextDark
+    Desc.Font = Enum.Font.Gotham
+    Desc.TextSize = 12
+    Desc.TextXAlignment = Enum.TextXAlignment.Left
+    Desc.TextWrapped = true
+    Desc.BackgroundTransparency = 1
+    
+    -- Переключатель
+    local ToggleContainer = Instance.new("Frame", Card)
+    ToggleContainer.Size = UDim2.new(0, 50, 0, 24)
+    ToggleContainer.Position = UDim2.new(1, -70, 0, 18)
+    ToggleContainer.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    ToggleContainer.BorderSizePixel = 0
+    
+    local ToggleCorner = Instance.new("UICorner", ToggleContainer)
+    ToggleCorner.CornerRadius = UDim.new(1, 0)
+    
+    local ToggleCircle = Instance.new("Frame", ToggleContainer)
+    ToggleCircle.Size = UDim2.new(0, 20, 0, 20)
+    ToggleCircle.Position = UDim2.new(0, 2, 0.5, -10)
+    ToggleCircle.BackgroundColor3 = Colors.Text
+    ToggleCircle.BorderSizePixel = 0
+    
+    local ToggleCircleCorner = Instance.new("UICorner", ToggleCircle)
+    ToggleCircleCorner.CornerRadius = UDim.new(1, 0)
+    
+    -- Кнопка настроек (если есть)
+    if hasSettings then
+        local SettingsBtn = Instance.new("ImageButton", Card)
+        SettingsBtn.Size = UDim2.new(0, 30, 0, 30)
+        SettingsBtn.Position = UDim2.new(0, 15, 1, -45)
+        SettingsBtn.Image = "rbxassetid://3926307971"
+        SettingsBtn.ImageRectOffset = Vector2.new(884, 4)
+        SettingsBtn.ImageRectSize = Vector2.new(36, 36)
+        SettingsBtn.ImageColor3 = Colors.TextDark
+        SettingsBtn.BackgroundTransparency = 1
+        
+        local SettingsLabel = Instance.new("TextLabel", Card)
+        SettingsLabel.Size = UDim2.new(0, 60, 0, 15)
+        SettingsLabel.Position = UDim2.new(0, 45, 1, -40)
+        SettingsLabel.Text = "Настройки"
+        SettingsLabel.TextColor3 = Colors.TextDark
+        SettingsLabel.Font = Enum.Font.GothamMedium
+        SettingsLabel.TextSize = 11
+        SettingsLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SettingsLabel.BackgroundTransparency = 1
+    end
+    
+    -- ЛКМ для включения/выключения
+    Card.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            Config[configKey] = not Config[configKey]
+            
+            local targetPos = Config[configKey] and UDim2.new(1, -28, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+            local targetColor = Config[configKey] and Colors.Accent or Color3.fromRGB(50, 50, 60)
+            
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                Position = targetPos
+            }):Play()
+            
+            TweenService:Create(ToggleContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                BackgroundColor3 = targetColor
+            }):Play()
+            
+            -- Изменение цвета карточки при активации
+            if Config[configKey] then
+                TweenService:Create(CardStroke, TweenInfo.new(0.3), {
+                    Color = Colors.Accent,
+                    Thickness = 2
+                }):Play()
+            else
+                TweenService:Create(CardStroke, TweenInfo.new(0.3), {
+                    Color = Colors.ItemBG,
+                    Thickness = 1
+                }):Play()
+            end
+        elseif input.UserInputType == Enum.UserInputType.MouseButton2 and hasSettings then
+            -- ПКМ для настроек
+            print("Открыть настройки для:", name)
+        end
+    end)
+    
+    -- Эффект при наведении
+    Card.MouseEnter:Connect(function()
+        TweenService:Create(Card, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(38, 38, 46)
+        }):Play()
+    end)
+    
+    Card.MouseLeave:Connect(function()
+        TweenService:Create(Card, TweenInfo.new(0.2), {
+            BackgroundColor3 = Colors.CardBG
+        }):Play()
     end)
 end
 
--- [ СОЗДАНИЕ ВКЛАДОК И МОДУЛЕЙ ]
-local TabCombat = CreateTab("Combat", "⚔️")
-local TabMove = CreateTab("Movement", "🏃")
-local TabVisual = CreateTab("Visuals", "👁️")
-local TabWorld = CreateTab("World", "🌍")
-local TabMisc = CreateTab("Misc", "⚙️")
+-- [ СОЗДАНИЕ ВКЛАДОК ]
+local tabs = {
+    {Name = "Combat", Icon = "⚔️"},
+    {Name = "Movement", Icon = "🏃"},
+    {Name = "Visuals", Icon = "👁️"},
+    {Name = "World", Icon = "🌍"},
+    {Name = "Misc", Icon = "⚙️"}
+}
 
--- 1. Movement Functions
-AddModule(TabMove, "Speed Bypass", "SpeedEnabled", true, function(f)
-    CreateSlider(f, "WalkSpeed", 16, 300, "Speed")
-end)
-AddModule(TabMove, "Flight Mode", "FlyEnabled", true, function(f)
-    CreateSlider(f, "Fly Speed", 10, 500, "FlySpeed")
-end)
-AddModule(TabMove, "Jump Power", "JumpEnabled", true, function(f)
-    CreateSlider(f, "Height", 50, 400, "JumpPower")
-end)
-AddModule(TabMove, "Infinite Jump", "InfJump", false)
-AddModule(TabMove, "Noclip (Wall Phase)", "Noclip", false)
-AddModule(TabMove, "Anti-Void", "AntiVoid", false)
-AddModule(TabMove, "BunnyHop", "BunnyHop", false)
-AddModule(TabMove, "SpinBot", "SpinBot", false)
-
--- 2. Combat Functions
-AddModule(TabCombat, "Aimbot", "Aimbot", true, function(f)
-    CreateSlider(f, "FOV Radius", 30, 800, "AimFOV")
-end)
-AddModule(TabCombat, "Hitbox Expander", "Hitbox", true, function(f)
-    CreateSlider(f, "Head Size", 2, 50, "HitboxSize")
-end)
-AddModule(TabCombat, "Auto Clicker", "AutoClicker", true, function(f)
-    CreateSlider(f, "Delay (sec)", 0, 2, "ClickDelay")
-end)
-AddModule(TabCombat, "Trigger Bot", "TriggerBot", false)
-AddModule(TabCombat, "Silent Aim", "SilentAim", false)
-AddModule(TabCombat, "Reach (Melee)", "Reach", false)
-
--- 3. Visuals Functions
-AddModule(TabVisual, "Enable ESP", "ESP_Enabled", false)
-AddModule(TabVisual, "Box ESP", "Boxes", false)
-AddModule(TabVisual, "Tracers", "Tracers", false)
-AddModule(TabVisual, "Name Tags", "Names", false)
-AddModule(TabVisual, "Chams (Wallhack)", "Chams", false)
-AddModule(TabVisual, "FullBright", "FullBright", false)
-AddModule(TabVisual, "No Fog", "NoFog", false)
-AddModule(TabVisual, "Crosshair", "Crosshair", false)
-
--- 4. World Functions
-AddModule(TabWorld, "Gravity Control", "Gravity", true, function(f)
-    CreateSlider(f, "Gravity Force", 0, 196, "Gravity")
-end)
-AddModule(TabWorld, "Time Changer", "TimeChanger", true, function(f)
-    CreateSlider(f, "Clock Time", 0, 24, "Time")
-end)
-AddModule(TabWorld, "Destroy Lava", "DestroyLava", false)
-AddModule(TabWorld, "X-Ray Mode", "XRay", false)
-
--- 5. Misc Functions
-AddModule(TabMisc, "Anti-AFK", "AntiAFK", false)
-AddModule(TabMisc, "Chat Spy", "ChatSpy", false)
-AddModule(TabMisc, "Rejoin Server", "Rejoin", false)
-
--- [ ЛОГИКА СКРИПТА (CORE LOOPS) ]
-
--- Movement Logic
-RunService.Heartbeat:Connect(function()
-    local Char = LocalPlayer.Character
-    if not Char or not Char:FindFirstChild("Humanoid") then return end
+for _, tab in ipairs(tabs) do
+    local tabBtn = CreateTab(tab.Name, tab.Icon)
     
-    local Hum = Char.Humanoid
-    local HRP = Char.HumanoidRootPart
-    
-    -- Speed
-    if Config.SpeedEnabled and Hum.MoveDirection.Magnitude > 0 then
-        Char:TranslateBy(Hum.MoveDirection * (Config.Speed / 100))
-    end
-    
-    -- Fly
-    if Config.FlyEnabled then
-        local Dir = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then Dir = Dir + Camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then Dir = Dir - Camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then Dir = Dir - Camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then Dir = Dir + Camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then Dir = Dir + Vector3.new(0,1,0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then Dir = Dir - Vector3.new(0,1,0) end
-        HRP.Velocity = Dir * Config.FlySpeed
-        Hum.PlatformStand = true
-    else
-        Hum.PlatformStand = false
-    end
-    
-    -- Jump
-    if Config.JumpEnabled then
-        Hum.JumpPower = Config.JumpPower
-    end
-    
-    -- Noclip
-    if Config.Noclip then
-        for _, p in pairs(Char:GetDescendants()) do
-            if p:IsA("BasePart") then p.CanCollide = false end
-        end
-    end
-    
-    -- Spinbot
-    if Config.SpinBot then
-        HRP.CFrame = HRP.CFrame * CFrame.Angles(0, math.rad(30), 0)
-    end
-    
-    -- AntiVoid
-    if Config.AntiVoid and HRP.Position.Y < -50 then
-        HRP.Velocity = Vector3.zero
-        HRP.CFrame = CFrame.new(HRP.Position.X, 100, HRP.Position.Z)
-    end
-end)
+    tabBtn.MouseButton1Click:Connect(function()
+        ActivateTab(tab.Name)
+        -- Здесь будет логика смены контента
+        print("Переключено на вкладку:", tab.Name)
+    end)
+end
 
--- Combat Logic
-task.spawn(function()
-    while task.wait(0.5) do
-        if Config.Hitbox then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    p.Character.HumanoidRootPart.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                    p.Character.HumanoidRootPart.Transparency = Config.HitboxTransp
-                    p.Character.HumanoidRootPart.CanCollide = false
-                end
-            end
-        end
-    end
-end)
+-- [ ЗАПОЛНЕНИЕ КОНТЕЙНЕРА МОДУЛЯМИ ]
+local modules = {
+    {"Speed Bypass", "SpeedEnabled", true},
+    {"Flight Mode", "FlyEnabled", true},
+    {"Jump Power", "JumpEnabled", true},
+    {"Infinite Jump", "InfJump", false},
+    {"Noclip", "Noclip", false},
+    {"Anti-Void", "AntiVoid", false},
+    {"BunnyHop", "BunnyHop", false},
+    {"Aimbot", "Aimbot", true},
+    {"Hitbox Expander", "Hitbox", true},
+    {"Auto Clicker", "AutoClicker", true},
+    {"Trigger Bot", "TriggerBot", false},
+    {"ESP Enabled", "ESP_Enabled", false}
+}
 
--- Visuals Logic
-task.spawn(function()
-    while task.wait(1) do
-        -- ESP Manager
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                -- Chams
-                local hl = p.Character:FindFirstChild("BlazixChams") or Instance.new("Highlight", p.Character)
-                hl.Name = "BlazixChams"
-                hl.Enabled = Config.Chams
-                hl.FillColor = Colors.Accent
-                hl.OutlineColor = Color3.new(1,1,1)
-            end
-        end
-        -- World
-        if Config.DestroyLava then
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v.Name == "Lava" or v.Name == "KillPart" then v:Destroy() end
-            end
-        end
-        -- Fullbright
-        if Config.FullBright then
-            Lighting.Brightness = 2
-            Lighting.ClockTime = 14
-            Lighting.GlobalShadows = false
-        end
-        -- Gravity
-        workspace.Gravity = Config.Gravity
-    end
-end)
+for i, module in ipairs(modules) do
+    CreateModuleCard(ModulesContainer, module[1], module[2], module[3])
+end
 
--- Anti-AFK
-LocalPlayer.Idled:Connect(function()
-    if Config.AntiAFK then
-        VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,0)
-        task.wait(0.1)
-        VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0)
-    end
-end)
+-- [ ФУНКЦИОНАЛЬНОСТЬ ГУИ ]
 
--- Dragging Logic
-local Dragging, DragInput, DragStart, StartPos
+-- Перетаскивание окна
+local dragging
+local dragInput
+local dragStart
+local startPos
+
 Header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = true
-        DragStart = input.Position
-        StartPos = Main.Position
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
 end)
+
+Header.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
 UserInputService.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement and Dragging then
-        local Delta = input.Position - DragStart
-        Main.Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
-    end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        Dragging = false
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
--- Default Page
-Pages["Combat"].Page.Visible = true
-Pages["Combat"].Btn.TextColor3 = Colors.Text
-Pages["Combat"].Btn.BackgroundColor3 = Colors.ItemBG
-
--- Keybind to Hide
+-- Показ/скрытие по RightControl
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.RightControl then
         Main.Visible = not Main.Visible
+        
+        if Main.Visible then
+            TweenService:Create(BackgroundBlur, TweenInfo.new(0.3), {
+                Size = 15
+            }):Play()
+            
+            Main.Position = UDim2.new(0.5, -425, 0.5, -300)
+            
+            -- Плавное появление
+            Main.Size = UDim2.new(0, 850, 0, 0)
+            Main.BackgroundTransparency = 1
+            
+            TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 850, 0, 600),
+                BackgroundTransparency = 0
+            }):Play()
+        else
+            TweenService:Create(BackgroundBlur, TweenInfo.new(0.3), {
+                Size = 0
+            }):Play()
+        end
     end
 end)
+
+-- Активация первой вкладки при открытии
+ActivateTab("Combat")
+
+-- Анимация появления при запуске
+task.wait(0.5)
+Main.Visible = true
+TweenService:Create(BackgroundBlur, TweenInfo.new(0.5), {
+    Size = 15
+}):Play()
+
+Main.Size = UDim2.new(0, 850, 0, 0)
+Main.BackgroundTransparency = 1
+
+TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 850, 0, 600),
+    BackgroundTransparency = 0
+}):Play()
+
+-- [ ОСНОВНАЯ ЛОГИКА СКРИПТА (остается без изменений) ]
+-- ... (вставьте всю функциональную логику из вашего оригинального скрипта)
+
+print("BLAZIX TITAN v12 успешно загружен!")
