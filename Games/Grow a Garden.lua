@@ -8,6 +8,7 @@
     • Right Control -> Скрыть меню
 ]]
 
+-- Сначала объявляем все сервисы
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -416,8 +417,6 @@ for _, tab in ipairs(tabs) do
     
     tabBtn.MouseButton1Click:Connect(function()
         ActivateTab(tab.Name)
-        -- Здесь будет логика смены контента
-        print("Переключено на вкладку:", tab.Name)
     end)
 end
 
@@ -522,7 +521,113 @@ TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingD
     BackgroundTransparency = 0
 }):Play()
 
--- [ ОСНОВНАЯ ЛОГИКА СКРИПТА (остается без изменений) ]
--- ... (вставьте всю функциональную логику из вашего оригинального скрипта)
+-- [ ДОБАВЛЯЕМ ФУНКЦИОНАЛЬНЫЕ ЧАСТИ ИЗ ОРИГИНАЛА ]
+
+-- Movement Logic
+RunService.Heartbeat:Connect(function()
+    local Char = LocalPlayer.Character
+    if not Char or not Char:FindFirstChild("Humanoid") then return end
+    
+    local Hum = Char.Humanoid
+    local HRP = Char.HumanoidRootPart
+    
+    -- Speed
+    if Config.SpeedEnabled and Hum.MoveDirection.Magnitude > 0 then
+        Char:TranslateBy(Hum.MoveDirection * (Config.Speed / 100))
+    end
+    
+    -- Fly
+    if Config.FlyEnabled then
+        local Dir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then Dir = Dir + Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then Dir = Dir - Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then Dir = Dir - Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then Dir = Dir + Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then Dir = Dir + Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then Dir = Dir - Vector3.new(0,1,0) end
+        HRP.Velocity = Dir * Config.FlySpeed
+        Hum.PlatformStand = true
+    else
+        Hum.PlatformStand = false
+    end
+    
+    -- Jump
+    if Config.JumpEnabled then
+        Hum.JumpPower = Config.JumpPower
+    end
+    
+    -- Noclip
+    if Config.Noclip then
+        for _, p in pairs(Char:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+    end
+    
+    -- Spinbot
+    if Config.SpinBot then
+        HRP.CFrame = HRP.CFrame * CFrame.Angles(0, math.rad(30), 0)
+    end
+    
+    -- AntiVoid
+    if Config.AntiVoid and HRP.Position.Y < -50 then
+        HRP.Velocity = Vector3.zero
+        HRP.CFrame = CFrame.new(HRP.Position.X, 100, HRP.Position.Z)
+    end
+end)
+
+-- Combat Logic
+task.spawn(function()
+    while task.wait(0.5) do
+        if Config.Hitbox then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    p.Character.HumanoidRootPart.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                    p.Character.HumanoidRootPart.Transparency = Config.HitboxTransp
+                    p.Character.HumanoidRootPart.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- Visuals Logic
+task.spawn(function()
+    while task.wait(1) do
+        -- ESP Manager
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                -- Chams
+                local hl = p.Character:FindFirstChild("BlazixChams") or Instance.new("Highlight", p.Character)
+                hl.Name = "BlazixChams"
+                hl.Enabled = Config.Chams
+                hl.FillColor = Colors.Accent
+                hl.OutlineColor = Color3.new(1,1,1)
+            end
+        end
+        -- World
+        if Config.DestroyLava then
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "Lava" or v.Name == "KillPart" then v:Destroy() end
+            end
+        end
+        -- Fullbright
+        if Config.FullBright then
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.GlobalShadows = false
+        end
+        -- Gravity
+        workspace.Gravity = Config.Gravity
+    end
+end)
+
+-- Anti-AFK
+LocalPlayer.Idled:Connect(function()
+    if Config.AntiAFK then
+        VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,0)
+        task.wait(0.1)
+        VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0)
+    end
+end)
 
 print("BLAZIX TITAN v12 успешно загружен!")
