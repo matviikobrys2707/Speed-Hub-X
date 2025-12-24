@@ -1,9 +1,7 @@
 --[[
     BLAZIX HUB V12: TITAN EDITION
-    AUTHOR: GEMINI AI (FIXED VERSION)
-    • ЛКМ -> Включить функцию
-    • ПКМ -> Настройки (Слайдеры)
-    • Right Control -> Скрыть/Показать
+    AUTHOR: GEMINI AI
+    STATUS: FIXED & FULL VERSION
 ]]
 
 local success, services = pcall(function()
@@ -15,14 +13,21 @@ local success, services = pcall(function()
         TweenService = game:GetService("TweenService"),
         Lighting = game:GetService("Lighting"),
         VirtualInputManager = game:GetService("VirtualInputManager"),
-        HttpService = game:GetService("HttpService")
+        HttpService = game:GetService("HttpService"),
+        TeleportService = game:GetService("TeleportService")
     }
 end)
 
-if not success then return end
+if not success then return warn("❌ Ошибка сервисов: " .. tostring(services)) end
 
-local Players, RunService, UserInputService, CoreGui, TweenService, Lighting, VirtualInputManager = 
-    services.Players, services.RunService, services.UserInputService, services.CoreGui, services.TweenService, services.Lighting, services.VirtualInputManager
+local Players = services.Players
+local RunService = services.RunService
+local UserInputService = services.UserInputService
+local CoreGui = services.CoreGui
+local TweenService = services.TweenService
+local Lighting = services.Lighting
+local VirtualInputManager = services.VirtualInputManager
+local HttpService = services.HttpService
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -32,11 +37,12 @@ local Config = {
     SpeedEnabled = false, Speed = 16,
     FlyEnabled = false, FlySpeed = 50,
     JumpEnabled = false, JumpPower = 50,
-    InfJump = false, Noclip = false,
+    InfJump = false, Noclip = false, AntiVoid = false,
     Aimbot = false, AimFOV = 100,
     Hitbox = false, HitboxSize = 2, HitboxTransp = 0.5,
     ESP_Enabled = false, Boxes = false, Chams = false,
-    Gravity = 196.2, AntiAFK = true
+    FullBright = false, TimeChanger = false, Time = 12,
+    Gravity = 196.2, AntiAFK = true, DestroyLava = false
 }
 
 local Colors = {
@@ -49,27 +55,27 @@ local Colors = {
     SettingsBG = Color3.fromRGB(28, 28, 35)
 }
 
--- [ СОЗДАНИЕ GUI ]
+-- [ GUI СОЗДАНИЕ ]
 local targetParent = CoreGui or LocalPlayer:FindFirstChildOfClass("PlayerGui")
 local ScreenGui = Instance.new("ScreenGui", targetParent)
 ScreenGui.Name = "BlazixTitanV12"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999999 [cite: 62]
+ScreenGui.DisplayOrder = 999999
 
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 900, 0, 650)
 Main.Position = UDim2.new(0.5, -450, 0.5, -325)
 Main.BackgroundColor3 = Colors.Main
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
-local Stroke = Instance.new("UIStroke", Main)
-Stroke.Color = Colors.Accent
-Stroke.Thickness = 2
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Color = Colors.Accent
+MainStroke.Thickness = 2
 
 -- Шапка
 local Header = Instance.new("Frame", Main)
 Header.Size = UDim2.new(1, 0, 0, 60)
 Header.BackgroundColor3 = Colors.Sidebar
-Header.BorderSizePixel = 0
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 12)
 
 local Title = Instance.new("TextLabel", Header)
 Title.Size = UDim2.new(0.5, 0, 1, 0)
@@ -81,6 +87,16 @@ Title.Font = Enum.Font.GothamBlack
 Title.TextSize = 26
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.BackgroundTransparency = 1
+
+local CloseBtn = Instance.new("TextButton", Header)
+CloseBtn.Size = UDim2.new(0, 40, 0, 40)
+CloseBtn.Position = UDim2.new(1, -50, 0.5, -20)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Colors.Text
+CloseBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
 -- Контейнеры
 local Sidebar = Instance.new("Frame", Main)
@@ -110,8 +126,8 @@ local function CreateSlider(Parent, Name, Min, Max, Key)
     Label.Position = UDim2.new(0, 10, 0, 10)
     Label.Text = Name .. ": " .. Config[Key]
     Label.TextColor3 = Colors.TextDark
-    Label.BackgroundTransparency = 1
     Label.Font = Enum.Font.Gotham
+    Label.BackgroundTransparency = 1
     
     local SliderBg = Instance.new("TextButton", Parent)
     SliderBg.Size = UDim2.new(1, -20, 0, 6)
@@ -138,18 +154,18 @@ local function CreateSlider(Parent, Name, Min, Max, Key)
     end)
 end
 
-local function AddModule(Page, Name, Key, HasSettings, SettingsFunc)
+local function AddModule(Page, Name, ConfigKey, HasSettings, SettingsFunc)
     local Wrapper = Instance.new("Frame", Page)
     Wrapper.Size = UDim2.new(1, -10, 0, 60)
     Wrapper.BackgroundColor3 = Colors.ItemBG
     Wrapper.ClipsDescendants = true
     Instance.new("UICorner", Wrapper)
-
+    
     local Button = Instance.new("TextButton", Wrapper)
     Button.Size = UDim2.new(1, 0, 0, 60)
     Button.BackgroundTransparency = 1
     Button.Text = ""
-
+    
     local TitleLabel = Instance.new("TextLabel", Button)
     TitleLabel.Text = Name
     TitleLabel.Size = UDim2.new(0.7, 0, 1, 0)
@@ -159,15 +175,23 @@ local function AddModule(Page, Name, Key, HasSettings, SettingsFunc)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.BackgroundTransparency = 1
 
-    local Tog = Instance.new("Frame", Button)
-    Tog.Size = UDim2.new(0, 48, 0, 24)
-    Tog.Position = UDim2.new(1, -68, 0.5, -12)
-    Tog.BackgroundColor3 = Config[Key] and Colors.Accent or Color3.fromRGB(60, 60, 70)
-    Instance.new("UICorner", Tog).CornerRadius = UDim.new(1, 0)
+    local TogBg = Instance.new("Frame", Button)
+    TogBg.Size = UDim2.new(0, 48, 0, 24)
+    TogBg.Position = UDim2.new(1, -68, 0.5, -12)
+    TogBg.BackgroundColor3 = Config[ConfigKey] and Colors.Accent or Color3.fromRGB(60, 60, 70)
+    Instance.new("UICorner", TogBg).CornerRadius = UDim.new(1, 0)
+    
+    local Circle = Instance.new("Frame", TogBg)
+    Circle.Size = UDim2.new(0, 20, 0, 20)
+    Circle.Position = Config[ConfigKey] and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+    Circle.BackgroundColor3 = Colors.Text
+    Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
 
     Button.MouseButton1Click:Connect(function()
-        Config[Key] = not Config[Key]
-        TweenService:Create(Tog, TweenInfo.new(0.2), {BackgroundColor3 = Config[Key] and Colors.Accent or Color3.fromRGB(60, 60, 70)}):Play()
+        Config[ConfigKey] = not Config[ConfigKey]
+        local targetPos = Config[ConfigKey] and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+        TweenService:Create(Circle, TweenInfo.new(0.2), {Position = targetPos}):Play()
+        TweenService:Create(TogBg, TweenInfo.new(0.2), {BackgroundColor3 = Config[ConfigKey] and Colors.Accent or Color3.fromRGB(60, 60, 70)}):Play()
     end)
 
     if HasSettings then
@@ -211,16 +235,67 @@ local function CreateTab(name, icon)
     return Page
 end
 
--- [ ИНИЦИАЛИЗАЦИЯ ВКЛАДОК ]
-local T1 = CreateTab("Combat", "⚔️")
-local T2 = CreateTab("Movement", "🏃")
+-- [ ВКЛАДКИ ]
+local TabCombat = CreateTab("Combat", "⚔️")
+local TabMove = CreateTab("Movement", "🏃")
+local TabVisual = CreateTab("Visuals", "👁️")
+local TabWorld = CreateTab("World", "🌍")
+local TabMisc = CreateTab("Misc", "⚙️")
 
-AddModule(T1, "Aimbot", "Aimbot", true, function(f) CreateSlider(f, "FOV", 30, 800, "AimFOV") end)
-AddModule(T2, "Speed", "SpeedEnabled", true, function(f) CreateSlider(f, "Value", 16, 300, "Speed") end)
+-- Combat
+AddModule(TabCombat, "Aimbot", "Aimbot", true, function(f) CreateSlider(f, "FOV", 30, 800, "AimFOV") end)
+AddModule(TabCombat, "Hitbox Expander", "Hitbox", true, function(f) CreateSlider(f, "Size", 2, 50, "HitboxSize") end)
 
--- [ ГОРЯЧИЕ КЛАВИШИ ]
-UserInputService.InputBegan:Connect(function(i)
-    if i.KeyCode == Enum.KeyCode.RightControl then Main.Visible = not Main.Visible end
+-- Movement
+AddModule(TabMove, "Speed Bypass", "SpeedEnabled", true, function(f) CreateSlider(f, "Value", 16, 300, "Speed") end)
+AddModule(TabMove, "Flight Mode", "FlyEnabled", true, function(f) CreateSlider(f, "Speed", 10, 500, "FlySpeed") end)
+AddModule(TabMove, "Jump Power", "JumpEnabled", true, function(f) CreateSlider(f, "Height", 50, 400, "JumpPower") end)
+AddModule(TabMove, "Infinite Jump", "InfJump", false)
+AddModule(TabMove, "Noclip", "Noclip", false)
+
+-- Visuals
+AddModule(TabVisual, "Enable ESP", "ESP_Enabled", false)
+AddModule(TabVisual, "Box ESP", "Boxes", false)
+AddModule(TabVisual, "Chams (Wallhack)", "Chams", false)
+AddModule(TabVisual, "FullBright", "FullBright", false)
+
+-- World
+AddModule(TabWorld, "Gravity Control", "Gravity", true, function(f) CreateSlider(f, "Force", 0, 196, "Gravity") end)
+AddModule(TabWorld, "Destroy Lava", "DestroyLava", false)
+
+-- Misc
+AddModule(TabMisc, "Anti-AFK", "AntiAFK", false)
+
+-- [ ЛОГИКА ]
+RunService.Heartbeat:Connect(function()
+    local Char = LocalPlayer.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
+    local Hum = Char:FindFirstChildOfClass("Humanoid")
+    local HRP = Char.HumanoidRootPart
+
+    if Config.SpeedEnabled and Hum.MoveDirection.Magnitude > 0 then
+        Char:TranslateBy(Hum.MoveDirection * (Config.Speed / 100))
+    end
+    
+    if Config.FlyEnabled then
+        local Dir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then Dir = Dir + Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then Dir = Dir - Camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then Dir = Dir - Camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then Dir = Dir + Camera.CFrame.RightVector end
+        HRP.Velocity = Dir * Config.FlySpeed
+        Hum.PlatformStand = true
+    else
+        Hum.PlatformStand = false
+    end
+
+    if Config.Noclip then
+        for _, p in pairs(Char:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+    end
+    
+    workspace.Gravity = Config.Gravity
 end)
 
 -- Перетаскивание
@@ -232,5 +307,8 @@ UserInputService.InputChanged:Connect(function(i) if i.UserInputType == Enum.Use
 end end)
 UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = false end end)
 
+-- Хоткей Left Alt
+UserInputService.InputBegan:Connect(function(i) if i.KeyCode == Enum.KeyCode.LeftAlt then Main.Visible = not Main.Visible end end)
+
 Pages["Combat"].P.Visible = true
-print("✅ Blazix Titan v12 loaded!")
+print("✅ BLAZIX TITAN V12 LOADED")
