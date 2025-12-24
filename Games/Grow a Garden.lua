@@ -17,9 +17,23 @@ local Lighting = game:GetService("Lighting")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+
+-- Проверка безопасности
+if not CoreGui then
+    warn("❌ CoreGui не найден!")
+    return
+end
+
+if not LocalPlayer then
+    warn("❌ LocalPlayer не найден!")
+    return
+end
+
+print("🚀 Загрузка Blazix Titan v12...")
 
 -- [ КОНФИГУРАЦИЯ / СОХРАНЕНИЕ НАСТРОЕК ]
 local Config = {
@@ -128,12 +142,14 @@ ScreenGui.Name = "BlazixTitan"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999 -- Высокий приоритет
 
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 900, 0, 650) -- ОГРОМНОЕ ОКНО
+Main.Size = UDim2.new(0, 900, 0, 650)
 Main.Position = UDim2.new(0.5, -450, 0.5, -325)
 Main.BackgroundColor3 = Colors.Main
 Main.ClipsDescendants = true
+Main.Visible = true -- Гарантируем видимость
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 local MainStroke = Instance.new("UIStroke", Main)
 MainStroke.Color = Colors.Accent
@@ -168,6 +184,7 @@ HideBtn.TextSize = 18
 Instance.new("UICorner", HideBtn).CornerRadius = UDim.new(0, 6)
 HideBtn.MouseButton1Click:Connect(function() 
     Main.Visible = not Main.Visible 
+    print("📌 Меню: " .. (Main.Visible and "Показано" or "Скрыто"))
 end)
 
 local CloseBtn = Instance.new("TextButton", Header)
@@ -179,7 +196,10 @@ CloseBtn.TextColor3 = Colors.Text
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 18
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
-CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+CloseBtn.MouseButton1Click:Connect(function() 
+    ScreenGui:Destroy() 
+    print("❌ Меню закрыто")
+end)
 
 -- Панель описания функции
 local DescriptionPanel = Instance.new("Frame", Main)
@@ -355,15 +375,17 @@ local function AddModule(Page, Name, ConfigKey, HasSettings, SettingsFunc)
         
         TweenService:Create(ToggleCircle, TweenInfo.new(0.2), {Position = targetPos}):Play()
         TweenService:Create(ToggleBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+        
+        print("🔧 " .. Name .. ": " .. (Config[ConfigKey] and "Включено" or "Выключено"))
     end)
     
     -- Ховер для описания
     Button.MouseEnter:Connect(function()
         DescriptionPanel.Visible = true
         if FunctionDescriptions[ConfigKey] then
-            DescriptionText.Text = FunctionDescriptions[ConfigKey]
+            DescriptionText.Text = Name .. ": " .. FunctionDescriptions[ConfigKey]
         else
-            DescriptionText.Text = "Нет описания для этой функции"
+            DescriptionText.Text = Name .. ": Нет описания для этой функции"
         end
     end)
     
@@ -644,7 +666,10 @@ local function AddSettingButton(Page, Name, Callback)
     Button.TextSize = 16
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 8)
     
-    Button.MouseButton1Click:Connect(Callback)
+    Button.MouseButton1Click:Connect(function()
+        Callback()
+        print("⚙️ " .. Name .. " активировано")
+    end)
 end
 
 AddSettingButton(TabSettings, "💾 Save Config", SaveConfig)
@@ -653,53 +678,46 @@ AddSettingButton(TabSettings, "🔄 Reset Config", ResetConfig)
 
 -- Функция Server Hop
 local function ServerHop()
+    print("🌐 Попытка Server Hop...")
     local Http = game:GetService("HttpService")
-    local TeleportService = game:GetService("TeleportService")
     
-    local function GetServers(placeId)
-        local servers = {}
-        local cursor = ""
+    local servers = {}
+    local cursor = ""
+    
+    for i = 1, 3 do
+        local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100&cursor=" .. cursor
+        local success, result = pcall(function()
+            return Http:JSONDecode(game:HttpGet(url))
+        end)
         
-        for i = 1, 10 do
-            local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?limit=100&cursor=" .. cursor
-            local success, result = pcall(function()
-                return Http:JSONDecode(game:HttpGet(url))
-            end)
-            
-            if success and result and result.data then
-                for _, server in ipairs(result.data) do
-                    if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                        table.insert(servers, server)
-                    end
+        if success and result and result.data then
+            for _, server in ipairs(result.data) do
+                if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                    table.insert(servers, server)
                 end
-                cursor = result.nextPageCursor or ""
-                if cursor == "" then break end
-            else
-                break
             end
+            cursor = result.nextPageCursor or ""
+            if cursor == "" then break end
+        else
+            break
         end
-        
-        return servers
     end
     
-    local servers = GetServers(game.PlaceId)
     if #servers > 0 then
         local randomServer = servers[math.random(1, #servers)]
         TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id)
+        print("🌐 Переход на сервер " .. randomServer.id)
     else
-        warn("Не найдено доступных серверов")
+        warn("❌ Не найдено доступных серверов")
+        TeleportService:Teleport(game.PlaceId)
     end
 end
 
 -- Функция Rejoin
 local function RejoinServer()
-    local TeleportService = game:GetService("TeleportService")
+    print("🔄 Rejoin Server...")
     TeleportService:Teleport(game.PlaceId)
 end
-
--- Добавляем кнопки Server Hop и Rejoin
-AddModule(TabMisc, "Server Hop", "ServerHop", false)
-AddModule(TabMisc, "Rejoin Server", "Rejoin", false)
 
 -- [ ЛОГИКА СКРИПТА (CORE LOOPS) ]
 
@@ -811,9 +829,15 @@ local function UpdateESP()
 end
 
 -- Movement Logic
-RunService.Heartbeat:Connect(function()
+local MovementConnection
+MovementConnection = RunService.Heartbeat:Connect(function()
     local Char = LocalPlayer.Character
-    if not Char or not Char:FindFirstChild("Humanoid") then return end
+    if not Char or not Char:FindFirstChild("Humanoid") then 
+        if MovementConnection then
+            MovementConnection:Disconnect()
+        end
+        return 
+    end
     
     local Hum = Char.Humanoid
     local HRP = Char:FindFirstChild("HumanoidRootPart")
@@ -1005,6 +1029,7 @@ LocalPlayer.Idled:Connect(function()
         VirtualInputManager:SendMouseButtonEvent(0,0,0,true,game,0)
         task.wait(0.1)
         VirtualInputManager:SendMouseButtonEvent(0,0,0,false,game,0)
+        print("🔄 Anti-AFK активирован")
     end
 end)
 
@@ -1012,7 +1037,8 @@ end)
 task.spawn(function()
     while task.wait(5) do
         if Config.AutoRejoin then
-            if not game:GetService("Players").LocalPlayer then
+            if not Players.LocalPlayer then
+                print("🔌 Обнаружен дисконнект, переподключаюсь...")
                 task.wait(3)
                 RejoinServer()
             end
@@ -1042,6 +1068,7 @@ Header.InputBegan:Connect(function(input)
         Dragging = true
         DragStart = input.Position
         StartPos = Main.Position
+        print("🖱️ Начало перетаскивания")
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
@@ -1053,28 +1080,39 @@ end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         Dragging = false
+        print("🖱️ Конец перетаскивания")
     end
 end)
 
 -- Default Page
-Pages["Combat"].Page.Visible = true
-Pages["Combat"].Btn.TextColor3 = Colors.Text
-Pages["Combat"].Btn.BackgroundColor3 = Colors.ItemBG
+if Pages["Combat"] and Pages["Combat"].Page then
+    Pages["Combat"].Page.Visible = true
+    Pages["Combat"].Btn.TextColor3 = Colors.Text
+    Pages["Combat"].Btn.BackgroundColor3 = Colors.ItemBG
+end
 
 -- Keybind to Hide (Left Alt)
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftAlt then
         Main.Visible = not Main.Visible
+        print("🔑 Left Alt: Меню " .. (Main.Visible and "показано" or "скрыто"))
     end
 end)
 
-print("🔥 Blazix Titan v12 loaded successfully!")
-print("📌 Features:")
-print("   • Advanced ESP with beautiful boxes (угловые рамки)")
-print("   • 45+ functions in 6 categories")
-print("   • Config save/load system")
-print("   • User info panel with avatar")
-print("   • Function descriptions on hover")
-print("   • Server Hop & Auto Rejoin")
-print("   • Left Alt to hide/show")
-print("   • Hide button in header")
+-- Принудительно показываем меню после загрузки
+task.wait(1) -- Ждём немного для стабилизации
+Main.Visible = true
+print("✅ Blazix Titan v12 успешно загружен!")
+print("📌 Меню должно быть видно на экране")
+print("📌 Используйте Left Alt для скрытия/показа")
+print("📌 Используйте кнопку '━' в шапке для скрытия")
+
+-- Уведомление в чат (опционально)
+task.spawn(function()
+    task.wait(2)
+    if game:GetService("TextChatService") then
+        pcall(function()
+            game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("🔓 Blazix Titan v12 активирован!")
+        end)
+    end
+end)
