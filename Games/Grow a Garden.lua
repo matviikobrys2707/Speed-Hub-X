@@ -18,6 +18,11 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 
+-- Проверка на наличие LocalPlayer
+if not Players.LocalPlayer then
+    repeat task.wait() until Players.LocalPlayer
+end
+
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
@@ -128,12 +133,14 @@ ScreenGui.Name = "BlazixTitan"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999999
 
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 900, 0, 650) -- ОГРОМНОЕ ОКНО
 Main.Position = UDim2.new(0.5, -450, 0.5, -325)
 Main.BackgroundColor3 = Colors.Main
 Main.ClipsDescendants = true
+Main.Visible = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 local MainStroke = Instance.new("UIStroke", Main)
 MainStroke.Color = Colors.Accent
@@ -811,7 +818,7 @@ local function UpdateESP()
 end
 
 -- Movement Logic
-RunService.Heartbeat:Connect(function()
+local movementConnection = RunService.Heartbeat:Connect(function()
     local Char = LocalPlayer.Character
     if not Char or not Char:FindFirstChild("Humanoid") then return end
     
@@ -1078,3 +1085,67 @@ print("   • Function descriptions on hover")
 print("   • Server Hop & Auto Rejoin")
 print("   • Left Alt to hide/show")
 print("   • Hide button in header")
+
+-- Уведомление о запуске
+task.spawn(function()
+    task.wait(0.5)
+    
+    local NotificationGui = Instance.new("ScreenGui")
+    NotificationGui.Name = "StartNotification"
+    NotificationGui.Parent = ScreenGui.Parent
+    NotificationGui.DisplayOrder = 1000000
+    
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 300, 0, 80)
+    MainFrame.Position = UDim2.new(1, -320, 1, -100)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = NotificationGui
+    
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+    
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Size = UDim2.new(0, 5, 1, 0)
+    AccentBar.BackgroundColor3 = Color3.fromRGB(0, 255, 140)
+    AccentBar.BorderSizePixel = 0
+    AccentBar.Parent = MainFrame
+    
+    Instance.new("UICorner", AccentBar).CornerRadius = UDim.new(0, 10)
+    
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, -20, 0, 25)
+    TitleLabel.Position = UDim2.new(0, 15, 0, 10)
+    TitleLabel.Text = "BLAZIX TITAN v12"
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 16
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Parent = MainFrame
+    
+    local MessageLabel = Instance.new("TextLabel")
+    MessageLabel.Size = UDim2.new(1, -20, 0, 40)
+    MessageLabel.Position = UDim2.new(0, 15, 0, 35)
+    MessageLabel.Text = "Blazix Hub successfully loaded!\nPress Left Alt to hide/show menu."
+    MessageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    MessageLabel.Font = Enum.Font.Gotham
+    MessageLabel.TextSize = 14
+    MessageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    MessageLabel.TextYAlignment = Enum.TextYAlignment.Top
+    MessageLabel.BackgroundTransparency = 1
+    MessageLabel.Parent = MainFrame
+    
+    -- Анимация
+    MainFrame.Position = UDim2.new(1, 350, 1, -100)
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -320, 1, -100)
+    }):Play()
+    
+    -- Закрытие
+    task.wait(5)
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Position = UDim2.new(1, 350, 1, -100)
+    }):Play()
+    task.wait(0.5)
+    NotificationGui:Destroy()
+end)
